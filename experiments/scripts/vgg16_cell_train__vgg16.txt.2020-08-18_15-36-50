@@ -1,0 +1,360 @@
++ echo Logging output to experiments/scripts/vgg16_cell_train__vgg16.txt.2020-08-18_15-36-50
+Logging output to experiments/scripts/vgg16_cell_train__vgg16.txt.2020-08-18_15-36-50
++ set +x
++ '[' '!' -f fr-rcnn-weights/vgg16/cell_train/default/vgg16_faster_rcnn_iter_110000.ckpt.index ']'
++ [[ ! -z '' ]]
++ CUDA_VISIBLE_DEVICES=0
++ time python ./tools/trainval_net_fr.py --weight data/imagenet_weights/vgg16.ckpt --imdb cell_train --imdbval cell_val --iters 110000 --cfg experiments/cfgs/vgg16.yml --net vgg16 --set ANCHOR_SIZES '[64,128,256,512]' ANCHOR_RATIOS '[0.5,1,2]' ANCHOR_STRIDES '[16,]' TRAIN.STEPSIZE '[80000]' P4 False
+/home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:526: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint8 = np.dtype([("qint8", np.int8, 1)])
+/home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:527: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint8 = np.dtype([("quint8", np.uint8, 1)])
+/home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:528: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint16 = np.dtype([("qint16", np.int16, 1)])
+/home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:529: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint16 = np.dtype([("quint16", np.uint16, 1)])
+/home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:530: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint32 = np.dtype([("qint32", np.int32, 1)])
+/home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:535: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  np_resource = np.dtype([("resource", np.ubyte, 1)])
+Called with args:
+Namespace(cfg_file='experiments/cfgs/vgg16.yml', imdb_name='cell_train', imdbval_name='cell_val', max_iters=110000, net='vgg16', set_cfgs=['ANCHOR_SIZES', '[64,128,256,512]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'ANCHOR_STRIDES', '[16,]', 'TRAIN.STEPSIZE', '[80000]', 'P4', 'False'], tag=None, weight='data/imagenet_weights/vgg16.ckpt')
+/home/xuus/LRP-HAI/tools/../lib_fr/model/config.py:384: YAMLLoadWarning: calling yaml.load() without Loader=... is deprecated, as the default Loader is unsafe. Please read https://msg.pyyaml.org/load for full details.
+  yaml_cfg = edict(yaml.load(f))
+10
+loading annotations into memory...
+Done (t=0.03s)
+creating index...
+index created!
+Loaded dataset `cell_train` for training
+Set proposal method: gt
+Appending horizontally-flipped training examples...
+cell_train gt roidb loaded from /home/xuus/LRP-HAI/data/cache/cell_train_gt_roidb.pkl
+done
+Preparing training data...
+done
+loading annotations into memory...
+Done (t=0.03s)
+creating index...
+index created!
+2020-08-18 15:36:51,863 faster-rcnn INFO: Called with args:
+2020-08-18 15:36:51,864 faster-rcnn INFO: Namespace(cfg_file='experiments/cfgs/vgg16.yml', imdb_name='cell_train', imdbval_name='cell_val', max_iters=110000, net='vgg16', set_cfgs=['ANCHOR_SIZES', '[64,128,256,512]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'ANCHOR_STRIDES', '[16,]', 'TRAIN.STEPSIZE', '[80000]', 'P4', 'False'], tag=None, weight='data/imagenet_weights/vgg16.ckpt')
+2020-08-18 15:36:51,864 faster-rcnn INFO: Using config:
+2020-08-18 15:36:51,865 faster-rcnn INFO: Using config:
+{'ANCHOR_RATIOS': [0.5, 1, 2],
+ 'ANCHOR_SIZES': [64, 128, 256, 512],
+ 'ANCHOR_STRIDES': [16],
+ 'DATA_DIR': '/home/xuus/LRP-HAI/data',
+ 'EXP_DIR': 'vgg16',
+ 'MATLAB': 'matlab',
+ 'MOBILENET': {'DEPTH_MULTIPLIER': 1.0,
+               'FIXED_LAYERS': 5,
+               'REGU_DEPTH': False,
+               'WEIGHT_DECAY': 4e-05},
+ 'P4': False,
+ 'PIXEL_MEANS': array([[[102.9801, 115.9465, 122.7717]]]),
+ 'POOLING_MODE': 'roi_align',
+ 'POOLING_SIZE': 7,
+ 'RESNET': {'FIXED_BLOCKS': 1, 'MAX_POOL': False},
+ 'RNG_SEED': 3,
+ 'ROOT_DIR': '/home/xuus/LRP-HAI',
+ 'RPN_CHANNELS': 512,
+ 'TEST': {'BBOX_REG': True,
+          'HAS_RPN': True,
+          'MAX_SIZE': 1000,
+          'MODE': 'nms',
+          'NMS': 0.3,
+          'PROPOSAL_METHOD': 'gt',
+          'RPN_NMS_THRESH': 0.7,
+          'RPN_POST_NMS_TOP_N': 1000,
+          'RPN_PRE_NMS_TOP_N': 6000,
+          'RPN_TOP_N': 5000,
+          'SCALES': [600],
+          'SVM': False},
+ 'TRAIN': {'ASPECT_GROUPING': False,
+           'BATCH_SIZE': 256,
+           'BBOX_INSIDE_WEIGHTS': [1.0, 1.0, 1.0, 1.0],
+           'BBOX_NORMALIZE_MEANS': [0.0, 0.0, 0.0, 0.0],
+           'BBOX_NORMALIZE_STDS': [0.1, 0.1, 0.2, 0.2],
+           'BBOX_NORMALIZE_TARGETS': True,
+           'BBOX_NORMALIZE_TARGETS_PRECOMPUTED': True,
+           'BBOX_REG': True,
+           'BBOX_THRESH': 0.5,
+           'BG_THRESH_HI': 0.5,
+           'BG_THRESH_LO': 0.0,
+           'BIAS_DECAY': False,
+           'DISPLAY': 20,
+           'DOUBLE_BIAS': True,
+           'FG_FRACTION': 0.25,
+           'FG_THRESH': 0.5,
+           'GAMMA': 0.1,
+           'HAS_RPN': True,
+           'IMS_PER_BATCH': 1,
+           'LEARNING_RATE': 0.001,
+           'MAX_SIZE': 1000,
+           'MOMENTUM': 0.9,
+           'PROPOSAL_METHOD': 'gt',
+           'RPN_BATCHSIZE': 256,
+           'RPN_BBOX_INSIDE_WEIGHTS': [1.0, 1.0, 1.0, 1.0],
+           'RPN_CLOBBER_POSITIVES': False,
+           'RPN_FG_FRACTION': 0.5,
+           'RPN_NEGATIVE_OVERLAP': 0.3,
+           'RPN_NMS_THRESH': 0.7,
+           'RPN_POSITIVE_OVERLAP': 0.7,
+           'RPN_POSITIVE_WEIGHT': -1.0,
+           'RPN_POST_NMS_TOP_N': 2000,
+           'RPN_PRE_NMS_TOP_N': 12000,
+           'SCALES': [600],
+           'SNAPSHOT_ITERS': 5000,
+           'SNAPSHOT_KEPT': 3,
+           'SNAPSHOT_PREFIX': 'vgg16_faster_rcnn',
+           'STEPSIZE': [80000],
+           'SUMMARY_INTERVAL': 180,
+           'TRUNCATED': False,
+           'USE_ALL_GT': True,
+           'USE_FLIPPED': True,
+           'USE_GT': False,
+           'WEIGHT_DECAY': 0.0001},
+ 'USE_E2E_TF': True,
+ 'USE_GPU_NMS': True}
+2020-08-18 15:36:51,865 faster-rcnn INFO: 1640 roidb entries
+2020-08-18 15:36:51,865 faster-rcnn INFO: Output will be saved to `/home/xuus/LRP-HAI/fr-rcnn-weights/vgg16/cell_train/default`
+2020-08-18 15:36:51,865 faster-rcnn INFO: TensorFlow summaries will be saved to `/home/xuus/LRP-HAI/tensorboard/vgg16/cell_train/default`
+loading annotations into memory...
+Done (t=0.00s)
+creating index...
+index created!
+Loaded dataset `cell_val` for training
+Set proposal method: gt
+Preparing training data...
+cell_val gt roidb loaded from /home/xuus/LRP-HAI/data/cache/cell_val_gt_roidb.pkl
+done
+loading annotations into memory...
+Done (t=0.00s)
+creating index...
+index created!
+2020-08-18 15:36:51,880 faster-rcnn INFO: 91 validation roidb entries
+Filtered 0 roidb entries: 1640 -> 1640
+Filtered 0 roidb entries: 91 -> 91
+2020-08-18 15:36:51.890456: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
+2020-08-18 15:36:51.911377: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 3591690000 Hz
+2020-08-18 15:36:51.911758: I tensorflow/compiler/xla/service/service.cc:150] XLA service 0x564496bcfee0 executing computations on platform Host. Devices:
+2020-08-18 15:36:51.911780: I tensorflow/compiler/xla/service/service.cc:158]   StreamExecutor device (0): <undefined>, <undefined>
+2020-08-18 15:36:52.076146: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:998] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2020-08-18 15:36:52.076596: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1433] Found device 0 with properties: 
+name: GeForce GTX 1080 major: 6 minor: 1 memoryClockRate(GHz): 1.835
+pciBusID: 0000:01:00.0
+totalMemory: 7.92GiB freeMemory: 7.56GiB
+2020-08-18 15:36:52.076612: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1512] Adding visible gpu devices: 0
+2020-08-18 15:36:52.077174: I tensorflow/core/common_runtime/gpu/gpu_device.cc:984] Device interconnect StreamExecutor with strength 1 edge matrix:
+2020-08-18 15:36:52.077186: I tensorflow/core/common_runtime/gpu/gpu_device.cc:990]      0 
+2020-08-18 15:36:52.077190: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1003] 0:   N 
+2020-08-18 15:36:52.077249: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1115] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 7351 MB memory) -> physical GPU (device: 0, name: GeForce GTX 1080, pci bus id: 0000:01:00.0, compute capability: 6.1)
+2020-08-18 15:36:52.078389: I tensorflow/compiler/xla/service/service.cc:150] XLA service 0x564496b2e390 executing computations on platform CUDA. Devices:
+2020-08-18 15:36:52.078403: I tensorflow/compiler/xla/service/service.cc:158]   StreamExecutor device (0): GeForce GTX 1080, Compute Capability 6.1
+2020-08-18 15:36:52,079 faster-rcnn.train_net INFO: Solving...
+WARNING:tensorflow:From /home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/python/framework/op_def_library.py:263: colocate_with (from tensorflow.python.framework.ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Colocations handled automatically by placer.
+anchor_strides:  [16]
+WARNING:tensorflow:From /home/xuus/LRP-HAI/tools/../lib_fr/layer_utils/proposal_layer.py:89: to_float (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.cast instead.
+WARNING:tensorflow:From /home/xuus/LRP-HAI/tools/../lib_fr/nets/network.py:166: py_func (from tensorflow.python.ops.script_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+tf.py_func is deprecated in TF V2. Instead, use
+    tf.py_function, which takes a python function which manipulates tf eager
+    tensors instead of numpy arrays. It's easy to convert a tf eager tensor to
+    an ndarray (just call tensor.numpy()) but having access to eager tensors
+    means `tf.py_function`s can use accelerators such as GPUs as well as
+    being differentiable using a gradient tape.
+    
+WARNING:tensorflow:From /home/xuus/LRP-HAI/tools/../lib_fr/nets/network.py:173: to_int32 (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.cast instead.
+WARNING:tensorflow:From /home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/contrib/layers/python/layers/layers.py:1624: flatten (from tensorflow.python.layers.core) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use keras.layers.flatten instead.
+WARNING:tensorflow:From /home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/python/keras/layers/core.py:143: calling dropout (from tensorflow.python.ops.nn_ops) with keep_prob is deprecated and will be removed in a future version.
+Instructions for updating:
+Please use `rate` instead of `keep_prob`. Rate should be set to `rate = 1 - keep_prob`.
+/home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/python/ops/gradients_impl.py:110: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+2020-08-18 15:36:53,288 faster-rcnn.train_net INFO: Restoring model snapshots from /home/xuus/LRP-HAI/fr-rcnn-weights/vgg16/cell_train/default/vgg16_faster_rcnn_iter_180000.ckpt
+WARNING:tensorflow:From /home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/python/training/saver.py:1266: checkpoint_exists (from tensorflow.python.training.checkpoint_management) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use standard file APIs to check for files with this prefix.
+2020-08-18 15:36:54,314 faster-rcnn.train_net INFO: Restored.
+2020-08-18 15:36:54,315 faster-rcnn.train_net INFO: done solving
+3.74user 2.02system 0:04.55elapsed 126%CPU (0avgtext+0avgdata 3136068maxresident)k
+0inputs+1920outputs (0major+705480minor)pagefaults 0swaps
++ ./experiments/scripts/test_faster_rcnn.sh 0 cell vgg16
++ set -e
++ export PYTHONUNBUFFERED=True
++ PYTHONUNBUFFERED=True
++ GPU_ID=0
++ DATASET=cell
++ NET=vgg16
++ array=($@)
++ len=3
++ EXTRA_ARGS=
++ EXTRA_ARGS_SLUG=
++ case ${DATASET} in
++ TRAIN_IMDB=cell_train
++ TEST_IMDB=cell_val
++ ITERS=110000
++ ANCHOR_SIZES='[64,128,256,512]'
++ RATIOS='[0.5,1,2]'
++ ANCHOR_STRIDES='[16,]'
++ P4=False
+++ date +%Y-%m-%d_%H-%M-%S
++ LOG=experiments/logs/test_vgg16_cell_train_.txt.2020-08-18_15-36-55
++ exec
+++ tee -a experiments/logs/test_vgg16_cell_train_.txt.2020-08-18_15-36-55
+tee: experiments/logs/test_vgg16_cell_train_.txt.2020-08-18_15-36-55: 沒有此一檔案或目錄
++ echo Logging output to experiments/logs/test_vgg16_cell_train_.txt.2020-08-18_15-36-55
+Logging output to experiments/logs/test_vgg16_cell_train_.txt.2020-08-18_15-36-55
++ set +x
++ [[ ! -z '' ]]
++ CUDA_VISIBLE_DEVICES=0
++ time python ./tools/test_net_fr.py --imdb cell_val --model fr-rcnn-weights/vgg16/cell_train/default/vgg16_faster_rcnn_iter_110000.ckpt --cfg experiments/cfgs/vgg16.yml --net vgg16 --set ANCHOR_SIZES '[64,128,256,512]' ANCHOR_RATIOS '[0.5,1,2]' ANCHOR_STRIDES '[16,]' P4 False
+/home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:526: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint8 = np.dtype([("qint8", np.int8, 1)])
+/home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:527: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint8 = np.dtype([("quint8", np.uint8, 1)])
+/home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:528: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint16 = np.dtype([("qint16", np.int16, 1)])
+/home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:529: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint16 = np.dtype([("quint16", np.uint16, 1)])
+/home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:530: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint32 = np.dtype([("qint32", np.int32, 1)])
+/home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:535: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  np_resource = np.dtype([("resource", np.ubyte, 1)])
+/home/xuus/LRP-HAI/tools/../lib_fr/model/config.py:384: YAMLLoadWarning: calling yaml.load() without Loader=... is deprecated, as the default Loader is unsafe. Please read https://msg.pyyaml.org/load for full details.
+  yaml_cfg = edict(yaml.load(f))
+8
+loading annotations into memory...
+Done (t=0.00s)
+creating index...
+index created!
+2020-08-18 15:36:56,145 faster-rcnn INFO: Called with args:
+2020-08-18 15:36:56,145 faster-rcnn INFO: Namespace(cfg_file='experiments/cfgs/vgg16.yml', comp_mode=False, imdb_name='cell_val', max_per_image=100, model='fr-rcnn-weights/vgg16/cell_train/default/vgg16_faster_rcnn_iter_110000.ckpt', net='vgg16', set_cfgs=['ANCHOR_SIZES', '[64,128,256,512]', 'ANCHOR_RATIOS', '[0.5,1,2]', 'ANCHOR_STRIDES', '[16,]', 'P4', 'False'], tag='')
+2020-08-18 15:36:56,146 faster-rcnn INFO: Using config:
+{'ANCHOR_RATIOS': [0.5, 1, 2],
+ 'ANCHOR_SIZES': [64, 128, 256, 512],
+ 'ANCHOR_STRIDES': [16],
+ 'DATA_DIR': '/home/xuus/LRP-HAI/data',
+ 'EXP_DIR': 'vgg16',
+ 'MATLAB': 'matlab',
+ 'MOBILENET': {'DEPTH_MULTIPLIER': 1.0,
+               'FIXED_LAYERS': 5,
+               'REGU_DEPTH': False,
+               'WEIGHT_DECAY': 4e-05},
+ 'P4': False,
+ 'PIXEL_MEANS': array([[[102.9801, 115.9465, 122.7717]]]),
+ 'POOLING_MODE': 'roi_align',
+ 'POOLING_SIZE': 7,
+ 'RESNET': {'FIXED_BLOCKS': 1, 'MAX_POOL': False},
+ 'RNG_SEED': 3,
+ 'ROOT_DIR': '/home/xuus/LRP-HAI',
+ 'RPN_CHANNELS': 512,
+ 'TEST': {'BBOX_REG': True,
+          'HAS_RPN': True,
+          'MAX_SIZE': 1000,
+          'MODE': 'nms',
+          'NMS': 0.3,
+          'PROPOSAL_METHOD': 'gt',
+          'RPN_NMS_THRESH': 0.7,
+          'RPN_POST_NMS_TOP_N': 1000,
+          'RPN_PRE_NMS_TOP_N': 6000,
+          'RPN_TOP_N': 5000,
+          'SCALES': [600],
+          'SVM': False},
+ 'TRAIN': {'ASPECT_GROUPING': False,
+           'BATCH_SIZE': 256,
+           'BBOX_INSIDE_WEIGHTS': [1.0, 1.0, 1.0, 1.0],
+           'BBOX_NORMALIZE_MEANS': [0.0, 0.0, 0.0, 0.0],
+           'BBOX_NORMALIZE_STDS': [0.1, 0.1, 0.2, 0.2],
+           'BBOX_NORMALIZE_TARGETS': True,
+           'BBOX_NORMALIZE_TARGETS_PRECOMPUTED': True,
+           'BBOX_REG': True,
+           'BBOX_THRESH': 0.5,
+           'BG_THRESH_HI': 0.5,
+           'BG_THRESH_LO': 0.0,
+           'BIAS_DECAY': False,
+           'DISPLAY': 20,
+           'DOUBLE_BIAS': True,
+           'FG_FRACTION': 0.25,
+           'FG_THRESH': 0.5,
+           'GAMMA': 0.1,
+           'HAS_RPN': True,
+           'IMS_PER_BATCH': 1,
+           'LEARNING_RATE': 0.001,
+           'MAX_SIZE': 1000,
+           'MOMENTUM': 0.9,
+           'PROPOSAL_METHOD': 'gt',
+           'RPN_BATCHSIZE': 256,
+           'RPN_BBOX_INSIDE_WEIGHTS': [1.0, 1.0, 1.0, 1.0],
+           'RPN_CLOBBER_POSITIVES': False,
+           'RPN_FG_FRACTION': 0.5,
+           'RPN_NEGATIVE_OVERLAP': 0.3,
+           'RPN_NMS_THRESH': 0.7,
+           'RPN_POSITIVE_OVERLAP': 0.7,
+           'RPN_POSITIVE_WEIGHT': -1.0,
+           'RPN_POST_NMS_TOP_N': 2000,
+           'RPN_PRE_NMS_TOP_N': 12000,
+           'SCALES': [600],
+           'SNAPSHOT_ITERS': 5000,
+           'SNAPSHOT_KEPT': 3,
+           'SNAPSHOT_PREFIX': 'vgg16_faster_rcnn',
+           'STEPSIZE': [80000],
+           'SUMMARY_INTERVAL': 180,
+           'TRUNCATED': False,
+           'USE_ALL_GT': True,
+           'USE_FLIPPED': True,
+           'USE_GT': False,
+           'WEIGHT_DECAY': 0.0001},
+ 'USE_E2E_TF': True,
+ 'USE_GPU_NMS': True}
+2020-08-18 15:36:56.147255: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
+2020-08-18 15:36:56.167322: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 3591690000 Hz
+2020-08-18 15:36:56.167848: I tensorflow/compiler/xla/service/service.cc:150] XLA service 0x5583deebf080 executing computations on platform Host. Devices:
+2020-08-18 15:36:56.167875: I tensorflow/compiler/xla/service/service.cc:158]   StreamExecutor device (0): <undefined>, <undefined>
+2020-08-18 15:36:56.349104: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:998] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2020-08-18 15:36:56.349562: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1433] Found device 0 with properties: 
+name: GeForce GTX 1080 major: 6 minor: 1 memoryClockRate(GHz): 1.835
+pciBusID: 0000:01:00.0
+totalMemory: 7.92GiB freeMemory: 7.56GiB
+2020-08-18 15:36:56.349579: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1512] Adding visible gpu devices: 0
+2020-08-18 15:36:56.350299: I tensorflow/core/common_runtime/gpu/gpu_device.cc:984] Device interconnect StreamExecutor with strength 1 edge matrix:
+2020-08-18 15:36:56.350311: I tensorflow/core/common_runtime/gpu/gpu_device.cc:990]      0 
+2020-08-18 15:36:56.350315: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1003] 0:   N 
+2020-08-18 15:36:56.350414: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1115] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 7351 MB memory) -> physical GPU (device: 0, name: GeForce GTX 1080, pci bus id: 0000:01:00.0, compute capability: 6.1)
+2020-08-18 15:36:56.351631: I tensorflow/compiler/xla/service/service.cc:150] XLA service 0x5583de9569c0 executing computations on platform CUDA. Devices:
+2020-08-18 15:36:56.351645: I tensorflow/compiler/xla/service/service.cc:158]   StreamExecutor device (0): GeForce GTX 1080, Compute Capability 6.1
+WARNING:tensorflow:From /home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/python/framework/op_def_library.py:263: colocate_with (from tensorflow.python.framework.ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Colocations handled automatically by placer.
+anchor_strides:  [16]
+WARNING:tensorflow:From /home/xuus/LRP-HAI/tools/../lib_fr/layer_utils/proposal_layer.py:89: to_float (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.cast instead.
+WARNING:tensorflow:From /home/xuus/LRP-HAI/tools/../lib_fr/layer_utils/roi_align.py:44: to_int32 (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.cast instead.
+WARNING:tensorflow:From /home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/contrib/layers/python/layers/layers.py:1624: flatten (from tensorflow.python.layers.core) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use keras.layers.flatten instead.
+2020-08-18 15:36:56,747 faster-rcnn INFO: Loading model check point from fr-rcnn-weights/vgg16/cell_train/default/vgg16_faster_rcnn_iter_110000.ckpt
+WARNING:tensorflow:From /home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/python/training/saver.py:1266: checkpoint_exists (from tensorflow.python.training.checkpoint_management) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use standard file APIs to check for files with this prefix.
+Traceback (most recent call last):
+  File "./tools/test_net_fr.py", line 124, in <module>
+    saver.restore(sess, args.model)
+  File "/home/xuus/anaconda3/envs/drl-rpn/lib/python3.7/site-packages/tensorflow/python/training/saver.py", line 1268, in restore
+    + compat.as_text(save_path))
+ValueError: The passed save_path is not a valid checkpoint: fr-rcnn-weights/vgg16/cell_train/default/vgg16_faster_rcnn_iter_110000.ckpt
+Command exited with non-zero status 1
+2.24user 0.89system 0:02.15elapsed 145%CPU (0avgtext+0avgdata 427716maxresident)k
+0inputs+8outputs (0major+67941minor)pagefaults 0swaps
