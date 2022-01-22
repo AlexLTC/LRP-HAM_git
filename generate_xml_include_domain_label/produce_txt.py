@@ -5,8 +5,8 @@ import os, glob, cv2
 # path_txt = '/home/dennischang/LRP-HAM/data/throat_uvula_dataset2007/VOC2007/20210116 Label/argument/txt/'
 
 """alex"""
-path = '/media/xuus/A45ED35B5ED324B8/LRP-HAM_git/generate_xml_include_domain_label/20211229_add_domain_label/target/gt/'
-path_txt = '/media/xuus/A45ED35B5ED324B8/LRP-HAM_git/generate_xml_include_domain_label/20211229_add_domain_label/target/txt/'
+path = '/media/xuus/A45ED35B5ED324B8/alex/for_train_data/20220115/target/gt/'
+path_txt = '/media/xuus/A45ED35B5ED324B8/alex/for_train_data/20220115/target/txt/'
 
 if not os.path.exists(path_txt):
     os.mkdir(path_txt)
@@ -14,7 +14,7 @@ if not os.path.exists(path_txt):
 # def read_file(file_dir):
 data_path = []
 img_path = os.listdir(path)
-img_path = sorted(img_path, key=lambda x: int(x[:-4]))
+img_path = sorted(img_path, key=lambda x: int(x[7:-4]))
 for item_name in img_path:
     # print(os.path.splitext(item_name))
     data_path.append(path + os.path.splitext(item_name)[0] + ".jpg")
@@ -46,7 +46,7 @@ for path in data_path:
             # print(os.path.splitext(path.split("/",)[-1])[0])
 
         with open(path_txt + os.path.splitext(path.split("/", )[-1])[0] + ".txt", "a") as f:
-            f.write(str(x) + "," + str(y) + "," + str(x + w) + "," + str(y + v) + ",uvula" +  ',' + domain_label + "\n")
+            f.write(str(x) + "," + str(y) + "," + str(x + w) + "," + str(y + v) + ",uvula" + "\n")
             f.close()
 
 

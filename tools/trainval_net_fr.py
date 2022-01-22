@@ -24,8 +24,6 @@ from nets.vgg16 import vgg16
 from nets.resnet_v1 import resnetv1
 from nets.P4 import P4
 
-from nets.revised_P4 import revised_P4# Revised by alex
-
 from utils.logger import setup_logger
 
 # 想改res101變p4, 要改config.py
@@ -39,15 +37,17 @@ def parse_args():
                         default='./experiments/cfgs/res101.yml', type=str)
     parser.add_argument('--weight', dest='weight',
                         help='initialize with pretrained model weights',
-                        default='./data/imagenet_weights/res101.ckpt',
-                        type=str)
+                        default='./data/imagenet_weights/res101.ckpt', type=str)
+    
     parser.add_argument('--imdb', dest='imdb_name',
                         help='dataset to train on',
                         # default='cell_train', type=str)
-                        default='polyp_2007_trainval', type=str)
+                        default='throat_uvula_2007_trainval', type=str)
+
     parser.add_argument('--imdbval', dest='imdbval_name',
                         help='dataset to validate on',
-                        default='polyp_2007_test', type=str)
+                        default='throat_uvula_target_2007_test', type=str)
+
     # default='cell_val', type=str)
     parser.add_argument('--iters', dest='max_iters',
                         help='number of iterations to train',
@@ -76,14 +76,14 @@ def combined_roidb(imdb_names):
   """
 
     def get_roidb(imdb_name):
-        imdb = get_imdb(imdb_name) # return _set[imdb_namel
+        imdb = get_imdb(imdb_name) # return _set[imdb_name]
         print('Loaded dataset `{:s}` for training'.format(imdb.name))
         imdb.set_proposal_method(cfg.TRAIN.PROPOSAL_METHOD)
         print('Set proposal method: {:s}'.format(cfg.TRAIN.PROPOSAL_METHOD))
         roidb = get_training_roidb(imdb) # 增加 roidb 的其他數據
         return roidb
 
-    roidbs = [get_roidb(s) for s in imdb_names.split('+')]
+    roidbs = [get_roidb(imdb_name) for imdb_name in imdb_names.split('+')]
     roidb = roidbs[0]
     if len(roidbs) > 1:
         for r in roidbs[1:]:
@@ -113,26 +113,27 @@ if __name__ == '__main__':
     # train set
     imdb, roidb = combined_roidb(args.imdb_name)
     # print('{:d} roidb entries'.format(len(roidb)))
+    # print("roidb components(0-5):")
+    # print(roidb[0])
+    # print("roidb components(-5-end):")
+    # print(roidb[-1])
 
     # output directory where the models are saved
     # output_dir = '/home/dennischang/LRP-HAI/fr-rcnn-weights/P4/res101/voc_2007_trainval/default_new_throat'
-    # #./LRP-HAI/加此處的output_dir訓練frCNN的結果權重/
+    #./LRP-HAI/加此處的output_dir訓練frCNN的結果權重/
 
-    # Revised by alex:
-    if args.net == 'res101':
-        weights_dirname = 'for_transfer_frcnn_weights'
-    else:
-        weights_dirname = 'fr-rcnn-weights'
-
-    output_dir = get_output_dir(imdb, args.tag, weights_dirname)
+    
+    output_dir = get_output_dir(imdb, args.tag)
     # print('Output will be saved to `{:s}`'.format(output_dir))
     logger = setup_logger("faster-rcnn", save_dir=output_dir, filename="log_train.txt")
     logger.info('Called with args:')
     logger.info(args)
     logger.info('Using config:')
     logger.info('Using config:\n{}'.format(pprint.pformat(cfg)))
-    logger.info('{:d} roidb entries'.format(len(roidb)))
+
+    logger.info('{:d} source roidb entries'.format(len(roidb)))
     logger.info('Output will be saved to `{:s}`'.format(output_dir))
+
     # tensorboard directory where the summaries are saved during training
     tb_dir = get_output_tb_dir(imdb, args.tag)
     logger.info('TensorFlow summaries will be saved to `{:s}`'.format(tb_dir))
@@ -144,16 +145,12 @@ if __name__ == '__main__':
     logger.info('{:d} validation roidb entries'.format(len(valroidb)))
     cfg.TRAIN.USE_FLIPPED = orgflip
 
-    # P4(bool) 在 train_FRCNN, P4 的.sh 檔中會被更動
     if cfg.P4:
         # load network
         if args.net == 'res50':
             net = P4(num_layers=50)
         elif args.net == 'res101':
             net = P4(num_layers=101)
-        # Revised by alex: for transfer use
-        elif args.net == 'res101_revised':
-            net = revised_P4(num_layers=101)
         else:
             raise NotImplementedError
     else:
@@ -167,7 +164,6 @@ if __name__ == '__main__':
         else:
             raise NotImplementedError
 
-    train_net(net, imdb, roidb, valroidb, output_dir, tb_dir,
-              pretrained_model=args.weight,
-              max_iters=args.max_iters)
+    train_net(net, imdb, roidb, valroidb, output_dir,
+              tb_dir, pretrained_model=args.weight, max_iters=args.max_iters)
 

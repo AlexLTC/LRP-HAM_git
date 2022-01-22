@@ -5,7 +5,7 @@ from PIL import Image
 # path = '/home/dennischang/LRP-HAM/data/throat_uvula_dataset2007/VOC2007/20210116 Label/argument/'
 
 """alex"""
-path = '/media/xuus/A45ED35B5ED324B8/LRP-HAM_git/generate_xml_include_domain_label/20211229_add_domain_label/target/'
+path = '/media/xuus/A45ED35B5ED324B8/alex/for_train_data/20220115/target/'
 
 # VEDAI 图像存储位置
 src_img_dir = path + 'gt'
@@ -57,7 +57,6 @@ for img in img_names:
           print(img)
         xml_file.write('    <object>\n')
         xml_file.write('        <name>' + str(spt[4]) + '</name>\n')
-        xml_file.write('        <domain>' + str(spt[5]) + '</domain>\n')
         xml_file.write('        <pose>Unspecified</pose>\n')
         xml_file.write('        <truncated>0</truncated>\n')
         xml_file.write('        <difficult>0</difficult>\n')

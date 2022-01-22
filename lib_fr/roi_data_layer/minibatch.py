@@ -31,6 +31,20 @@ def get_minibatch(roidb, num_classes):
 
     blobs = {'data': im_blob}
 
+#-----------------DA Part---------------------------
+    im_name = roidb[0]['image']
+    print("----------------------------------------Show image name:{}".format(im_name))
+    if im_name.find("source_") == -1: # synthia image
+        blobs['need_backprop'] = np.zeros((1,1),dtype=np.int32)
+        blobs['dc_label'] = np.zeros((1, 1),dtype=np.float32)
+        # print("blobs's need_backprop & dc_label have enter")
+        # print(blobs['need_backprop'])
+    else: # pascal image
+        blobs['need_backprop'] = np.ones((1,1),dtype=np.int32)  
+        blobs['dc_label'] = np.ones((1, 1),dtype=np.float32)
+
+#----------------DA end-----------------------------
+
     assert len(im_scales) == 1, "Single batch only"
     assert len(roidb) == 1, "Single batch only"
 

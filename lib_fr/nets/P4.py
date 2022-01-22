@@ -19,6 +19,8 @@ import numpy as np
 from nets.network import Network
 from model.config import cfg
 
+from layer_utils.flip_gradient import flip_gradient
+
 pyramid_maps = {
     'resnet50': {'C1': 'resnet_v1_50/pool1/Relu:0',
                  'C2': 'resnet_v1_50/block1/unit_2/bottleneck_v1',
@@ -192,6 +194,34 @@ class P4(Network):
             fc6 = slim.fully_connected(inputs, num_outputs=1024, scope='fc6')
             fc7 = slim.fully_connected(fc6, num_outputs=1024, scope='fc7')
         return fc7
+
+
+    def _tail_to_da(self, fc7, is_training, reuse=None):
+        with tf.variable_scope('instance-level_DA'):
+            # -1 is scale-factor for GRL
+            # find a way to show the gradient is flipped
+            feat = flip_gradient(fc7, -0.1)
+            dc_ip1 = slim.fully_connected(feat, num_outputs=1024, scope='dc_ip1')
+            dc_ip1 = slim.dropout(dc_ip1, 0.5, is_training=is_training, scope='dc_drop1')
+            dc_ip2 = slim.fully_connected(dc_ip1, num_outputs=1024, scope='dc_ip2')
+            dc_ip2 = slim.dropout(dc_ip2, 0.5, is_training=is_training, scope='dc_drop2')
+            dc_ip3 = slim.fully_connected(dc_ip2, num_outputs=1, scope='dc_ip3')
+        return dc_ip3
+
+
+    def _head_to_daConv(self, net_conv, is_training, reuse=None):
+        # ss means "semantic segamentation section"
+        with tf.variable_scope('image-level_DA'): 
+            # -1 is scale-factor for GRL
+            da_conv_grl = flip_gradient(net_conv, -0.1)
+            da_conv_ss_6 = slim.conv2d(da_conv_grl, num_outputs=512,
+                                       kernel_size=[1, 1],
+                                       stride=1, padding='VALID', scope='da_conv_ss_6')
+            da_score_ss = slim.conv2d(da_conv_ss_6, num_outputs=2,
+                                      kernel_size=[1, 1],
+                                      stride=1, padding='VALID', scope='da_conv_ss')
+        return da_score_ss
+
 
     def _decide_blocks(self):
         # choose different blocks for different number of layers

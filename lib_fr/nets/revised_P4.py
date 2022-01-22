@@ -16,6 +16,9 @@ from tensorflow.contrib.slim.python.slim.nets import resnet_v1
 from tensorflow.contrib.slim.python.slim.nets.resnet_v1 import resnet_v1_block
 import numpy as np
 
+# Revised by alex(for GRL)
+from layer_utils.flip_gradient import flip_gradient
+
 from nets.network import Network
 from model.config import cfg
 
@@ -87,7 +90,7 @@ def fusion_two_layer(C_i, P_j, scope):
         return add_f
 
 
-class P4(Network):
+class revised_P4(Network):
     def __init__(self, num_layers=50):
         Network.__init__(self)
         self._num_layers = num_layers
@@ -192,6 +195,33 @@ class P4(Network):
             fc6 = slim.fully_connected(inputs, num_outputs=1024, scope='fc6')
             fc7 = slim.fully_connected(fc6, num_outputs=1024, scope='fc7')
         return fc7
+
+
+    def _tail_to_da(self, fc7, is_training, reuse=None):
+        # fc7 is flipped gradient to feat da
+        with tf.Variable_scope('instance-level DA'):
+            # -1 is scale-factor for GRL
+            # find a way to show the gradient is flipped
+            feat = flip_gradient(fc7, -0.1)
+            dc_ip1 = slim.fully_connected(feat, num_outputs=1024, scop='dc_ip1')
+            dc_ip1 = slim.dropout(dc_ip1, 0.5, is_training=is_training, scope='dc_drop1')
+            dc_ip2 = slim.fully_connected(dc_ip1, num_outputs=1024, scop='dc_ip1')
+            dc_ip2 = slim.dropout(dc_ip2, 0.5, is_training=is_training, scope='dc_drop2')
+            dc_ip3 = slim.fully_connected(dc_ip2, num_outputs=1, scop='dc_ip3')
+
+
+    def _head_to_daConv(self, net_conv, is_training, reuse=None):
+        # ss means "semantic segamentation section"
+        with tf.Variable_scope('image-level DA'): 
+            # -1 is scale-factor for GRL
+            da_conv_grl = flip_gradient(net_conv, -0.1)
+            da_conv_ss_6 = slim.conv2d(da_conv_grl, num_outputs=512,
+                                       kernel_size=[1, 1],
+                                       stride=1, padding='VALID', scope='da_conv_ss_6')
+            da_conv_ss = slim.conv2d(da_conv_ss_6, num_outputs=2,
+                                      kernel_size=[1, 1],
+                                      stride=1, padding='VALID', scope='da_conv_ss')
+
 
     def _decide_blocks(self):
         # choose different blocks for different number of layers
