@@ -289,11 +289,18 @@ class SolverWrapper(object):
             blobs = self.data_layer.forward()
             # print("Show blobs:{}".format(blobs))
             # break
+            # 
+            # (['data': array[...], dtype=float32), 
+            # 'need_backprop': array([[1]], dtype=int32), 
+            # 'dc_label': array([[1.]], dtype=float32), 
+            # 'gt_boxes': array([[371.25, 196.25, 537.5 , 358.75,   1.]], dtype=float32), 
+            # 'im_info': array([600.  , 800.  ,   1.25], dtype=float32)}])
 
             now = time.time()
             if iter == 1 or now - last_summary_time > cfg.TRAIN.SUMMARY_INTERVAL:
                 # Compute the graph with summary
-                rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, da_conv_loss, da_CR_loss, total_loss, summary = \
+                # is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, da_conv_loss, da_CR_loss, total_loss, summary = \
+                is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, da_conv_loss, total_loss, summary = \
                     self.net.train_step_with_summary(sess, blobs, train_op)
                 self.writer.add_summary(summary, float(iter))
                 # Also check the summary on the validation set
@@ -303,7 +310,8 @@ class SolverWrapper(object):
                 last_summary_time = now
             else:
                 # Compute the graph without summary
-                rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, da_conv_loss, da_CR_loss, total_loss = \
+                # is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, da_conv_loss, da_CR_loss, total_loss = \
+                is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, da_conv_loss, total_loss = \
                     self.net.train_step(sess, blobs, train_op)
             timer.toc()
 
@@ -314,16 +322,17 @@ class SolverWrapper(object):
                                  '>>> rpn_loss_box: %.6f\n'
                                  '>>> loss_cls: %.6f\n'
                                  '>>> loss_box: %.6f\n'
-                                 '>>> dc_loss: %.6f\n'
+                                 # '>>> dc_loss: %.6f\n'
                                  '>>> da_conv_loss: %.6f\n'
-                                 '>>> da_CR_loss: %.6f\n'
+                                 # '>>> da_CR_loss: %.6f\n'
                                  '>>> lr: %f' % \
                                  (iter, max_iters, total_loss, 
                                   rpn_loss_cls, rpn_loss_box, loss_cls, loss_box,
-                                  dc_loss, da_conv_loss, da_CR_loss,
+                                  # dc_loss, da_conv_loss, da_CR_loss,
+                                  da_conv_loss,
                                   lr.eval()))
                 self.logger.info('speed: {:.3f}s / iter'.format(timer.average_time))
-           
+            # print("is_target: {}".format(is_target))
             # print("total_loss:{:.6f}".format(total_loss))
             # print("rpn_loss_cls:{:.6f}".format(rpn_loss_cls))
             # print("rpn_loss_box:{:.6f}".format(rpn_loss_box))
@@ -331,6 +340,7 @@ class SolverWrapper(object):
             # print("loss_box:{:.6f}".format(loss_box))
             # print("dc_loss:{:.6f}".format(dc_loss))
             # print("da_conv_loss:{:.6f}".format(da_conv_loss))
+            # print("da_CR_loss:{:.6f}".format(da_CR_loss))
 
             # Snapshotting
             if iter % cfg.TRAIN.SNAPSHOT_ITERS == 0:

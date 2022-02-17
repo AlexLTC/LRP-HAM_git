@@ -62,6 +62,17 @@ case ${DATASET} in
     ANCHOR_STRIDES="[16,]"
     P4=True
     ;;
+    
+  throat_uvula)
+    TRAIN_IMDB="throat_uvula_2007_train"
+    TEST_IMDB="throat_uvula_2007_test"
+    STEPSIZE="[50000]"
+    ITERS=70000
+    ANCHOR_SIZES="[128,256,512]"
+    RATIOS="[0.5,1,2]"
+    ANCHOR_STRIDES="[16,]"
+    P4=True
+    ;;
 
   polyp)
     TRAIN_IMDB="polyp_2007_trainval"

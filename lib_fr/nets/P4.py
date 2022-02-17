@@ -184,7 +184,8 @@ class P4(Network):
         print(20 * "__")
         # self._act_summaries.append([pyramid_dict[level_name] for level_name in cfg.FPN.LEVELS])
         self._layers['head'] = pyramid_dict['P4']
-        # return pyramid_dict  # return the dict. And get each level by key. But ensure the levels are consitant
+        # return pyramid_dict  
+        # return the dict. And get each level by key. But ensure the levels are consitant
         # return list rather than dict, to avoid dict is unordered
         return pyramid_dict['P4']
 
@@ -200,7 +201,7 @@ class P4(Network):
         with tf.variable_scope('instance-level_DA'):
             # -1 is scale-factor for GRL
             # find a way to show the gradient is flipped
-            feat = flip_gradient(fc7, -0.1)
+            feat = flip_gradient(fc7, 0.1)
             dc_ip1 = slim.fully_connected(feat, num_outputs=1024, scope='dc_ip1')
             dc_ip1 = slim.dropout(dc_ip1, 0.5, is_training=is_training, scope='dc_drop1')
             dc_ip2 = slim.fully_connected(dc_ip1, num_outputs=1024, scope='dc_ip2')
@@ -213,7 +214,7 @@ class P4(Network):
         # ss means "semantic segamentation section"
         with tf.variable_scope('image-level_DA'): 
             # -1 is scale-factor for GRL
-            da_conv_grl = flip_gradient(net_conv, -0.1)
+            da_conv_grl = flip_gradient(net_conv, 0.1)
             da_conv_ss_6 = slim.conv2d(da_conv_grl, num_outputs=512,
                                        kernel_size=[1, 1],
                                        stride=1, padding='VALID', scope='da_conv_ss_6')

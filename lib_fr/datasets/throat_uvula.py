@@ -40,9 +40,9 @@ class throat_uvula(imdb):
                          'uvula')
         self._class_to_ind = dict(list(zip(self.classes, list(range(self.num_classes)))))
         self._image_ext = '.jpg'
-        self._image_index = self._load_image_set_index()  # 讀入存在 trainval.txt or test.txt 的數字
+        self._image_index = self._load_image_set_index()
         # Default to roidb handler
-        self._roidb_handler = self.gt_roidb  # _load_pascal_anntotaion
+        self._roidb_handler = self.gt_roidb
         self._salt = str(uuid.uuid4())
         self._comp_id = 'comp4'
 
@@ -169,9 +169,7 @@ class throat_uvula(imdb):
             y1 = float(bbox.find('ymin').text) - 1
             x2 = float(bbox.find('xmax').text) - 1
             y2 = float(bbox.find('ymax').text) - 1
-
             cls = self._class_to_ind[obj.find('name').text.lower().strip()]
-            # lower() 小寫, strip() 去空白
             boxes[ix, :] = [x1, y1, x2, y2]
             gt_classes[ix] = cls
             overlaps[ix, cls] = 1.0
@@ -209,6 +207,8 @@ class throat_uvula(imdb):
         # Move to appropriate folder for easy upload to eval server
         file_path = os.path.join(self._devkit_path, 'results', 'VOC' + self._year,
                                  'Main')
+        os.makedirs(file_path)
+
         if '2012' in self._year:
             file_path_start = file_path
             os.mkdir(file_path + '/results')
