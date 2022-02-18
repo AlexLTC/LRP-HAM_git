@@ -394,7 +394,7 @@ class Network(object):
                                                                    labels=da_label_ss_resize))
             # consisitency regularization loss
             # resize_daConv_CR = self._resize_da_conv_score_for_CR(da_score_ss, dc_ip3)
-            # da_CR_loss = tf.reduce_mean(tf.abs(resize_daConv_CR - dc_ip3))  # l1 distance
+            # da_CR_loss = tf.reduce_mean(tf.abs(tf.substract(resize_daConv_CR, dc_ip3)))  # l1 distance
 
             # self._losses['dc_loss'] = dc_loss
             self._losses['da_conv_loss'] = da_conv_loss
