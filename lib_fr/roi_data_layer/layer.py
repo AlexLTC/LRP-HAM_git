@@ -55,7 +55,38 @@ class RoIDataLayer(object):
             inds = np.reshape(inds[row_perm, :], (-1,))
             self._perm = inds
         else:
-            self._perm = np.random.permutation(np.arange(len(self._roidb)))
+            if not self._random:  # train mode
+                # divide source & target from roidb
+                self._source_inds = [i for i in range(len(self._roidb)) if self._roidb[i]['image'].find('source') != -1]
+                self._target_inds = [i for i in range(len(self._roidb)) if self._roidb[i]['image'].find('target') != -1]
+                # print("source index len: {}".format(len(self._source_inds)))
+                print("source index: {}".format(self._source_inds[:5]))
+                # print("target index len: {}".format(len(self._target_inds)))
+                print("target index: {}".format(self._target_inds[:5]))
+
+                assert len(self._source_inds) == 1128, 'source index length error in layer.py'
+                assert len(self._target_inds) == 746, 'target index length error in layer.py'
+
+                # shuffle source & target index independently
+                source_perm = np.random.permutation(self._source_inds)
+                target_perm = np.random.permutation(self._target_inds)
+                print("source perm: {}".format(source_perm[:5]))
+                print("target perm: {}".format(target_perm[:5]))
+
+                # concate source & target index (length depends on target dataset with less data)
+                perm_concate = []
+                for i in range(len(self._target_inds)):
+                    perm_concate.append(source_perm[i])
+                    perm_concate.append(target_perm[i])
+
+                print("perm concate length: {}".format(len(perm_concate)))
+                print("perm concate: {}".format(perm_concate[:5]))
+
+                assert len(perm_concate) == 1492, "perm concate length error in layer.py"
+
+                self._perm = perm_concate
+            else:  # val mode    
+                self._perm = np.random.permutation(np.arange(len(self._roidb)))
         # Restore the random state
         if self._random:
             np.random.set_state(st0)
@@ -65,7 +96,8 @@ class RoIDataLayer(object):
     def _get_next_minibatch_inds(self):
         """Return the roidb indices for the next minibatch."""
 
-        if self._cur + cfg.TRAIN.IMS_PER_BATCH >= len(self._roidb):
+        # if self._cur + cfg.TRAIN.IMS_PER_BATCH >= len(self._roidb):
+        if self._cur + cfg.TRAIN.IMS_PER_BATCH >= len(self._perm):
             self._shuffle_roidb_inds()
 
         db_inds = self._perm[self._cur:self._cur + cfg.TRAIN.IMS_PER_BATCH]

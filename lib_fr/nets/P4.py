@@ -196,31 +196,62 @@ class P4(Network):
             fc7 = slim.fully_connected(fc6, num_outputs=1024, scope='fc7')
         return fc7
 
+    @tf.custom_gradient
+    def simple_flip_grad(x, l):
+        def grad(dy):
+            return tf.negative(dy) * l
+        return tf.identity(x), grad
+
+    def lr_mult(self, alpha):
+        @tf.custom_gradient
+        def _lr_mult(x):
+            def grad(dy):
+                return dy * alpha * tf.ones_like(x)
+            return x, grad
+        return _lr_mult
+
 
     def _tail_to_da(self, fc7, is_training, reuse=None):
         with tf.variable_scope('instance-level_DA'):
-            # -1 is scale-factor for GRL
-            # find a way to show the gradient is flipped
-            feat = flip_gradient(fc7, 0.1)
-            dc_ip1 = slim.fully_connected(feat, num_outputs=1024, scope='dc_ip1')
+            # -0.1 is scale-factor for GRL
+            feat = self.lr_mult(-0.1)(fc7)
+            # for DA FRCNN need to set weights lr to (lr*10), bias lr to (lr*20)
+            # from Caffe1 DA-FRCNN concept
+            w_init = tf.truncated_normal_initializer(stddev=0.01)
+            w_last_init = tf.truncated_normal_initializer(stddev=0.05)
+            dc_ip1 = slim.fully_connected(fc7, 
+                                          num_outputs=1024,
+                                          weights_initializer=w_init,
+                                          scope='dc_ip1')
             dc_ip1 = slim.dropout(dc_ip1, 0.5, is_training=is_training, scope='dc_drop1')
-            dc_ip2 = slim.fully_connected(dc_ip1, num_outputs=1024, scope='dc_ip2')
+            dc_ip2 = slim.fully_connected(dc_ip1,
+                                          num_outputs=1024,
+                                          weights_initializer=w_init,
+                                          scope='dc_ip2')
             dc_ip2 = slim.dropout(dc_ip2, 0.5, is_training=is_training, scope='dc_drop2')
-            dc_ip3 = slim.fully_connected(dc_ip2, num_outputs=1, scope='dc_ip3')
+            dc_ip3 = slim.fully_connected(dc_ip2,
+                                          num_outputs=2,
+                                          weights_initializer=w_last_init,
+                                          scope='dc_ip3')
         return dc_ip3
 
 
     def _head_to_daConv(self, net_conv, is_training, reuse=None):
         # ss means "semantic segamentation section"
         with tf.variable_scope('image-level_DA'): 
-            # -1 is scale-factor for GRL
-            da_conv_grl = flip_gradient(net_conv, 0.1)
+            # -0.1 is scale-factor for GRL
+            w_init = tf.truncated_normal_initializer(stddev=0.001) 
+            da_conv_grl = self.lr_mult(-0.1)(net_conv)
             da_conv_ss_6 = slim.conv2d(da_conv_grl, num_outputs=512,
                                        kernel_size=[1, 1],
-                                       stride=1, padding='VALID', scope='da_conv_ss_6')
+                                       stride=1, padding='VALID',
+                                       weights_initializer=w_init,
+                                       scope='da_conv_ss_6')
             da_score_ss = slim.conv2d(da_conv_ss_6, num_outputs=2,
                                       kernel_size=[1, 1],
-                                      stride=1, padding='VALID', scope='da_conv_ss')
+                                      stride=1, padding='VALID',
+                                      weights_initializer=w_init,
+                                      scope='da_conv_ss')
         return da_score_ss
 
 

@@ -301,7 +301,7 @@ class SolverWrapper(object):
             if iter == 1 or now - last_summary_time > cfg.TRAIN.SUMMARY_INTERVAL:
                 # Compute the graph with summary
                 # is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, da_conv_loss, da_CR_loss, total_loss, summary = \
-                is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, total_loss, summary = \
+                is_target, dc_ip3, dc_label_resize, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, total_loss, summary = \
                     self.net.train_step_with_summary(sess, blobs, train_op)
                 self.writer.add_summary(summary, float(iter))
                 # Also check the summary on the validation set
@@ -312,7 +312,7 @@ class SolverWrapper(object):
             else:
                 # Compute the graph without summary
                 # is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, da_conv_loss, da_CR_loss, total_loss = \
-                is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, total_loss = \
+                is_target, dc_ip3, dc_label_resize, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, total_loss = \
                     self.net.train_step(sess, blobs, train_op)
             timer.toc()
 
@@ -335,17 +335,18 @@ class SolverWrapper(object):
                 self.logger.info('speed: {:.3f}s / iter'.format(timer.average_time))
             print("iter: {}".format(iter))
             print("is_target: {}".format(is_target))
+            print("dc_ip3: {}".format(np.transpose(dc_ip3)))
+            print("dc_label_resize: {}".format(np.transpose(dc_label_resize)))
             # print("rpn_ce has grad? {}".format(rpn_loss_cls))
             # print("rpn_loss_box has grad? {}".format(rpn_loss_box))
             # print("loss_cls has grad? {}".format(loss_cls))
             # print("loss_box has grad? {}".format(loss_box))
-            print("dc_loss has grad? {}".format(dc_loss))
             # print("total_loss:{:.6f}".format(total_loss))
             # print("rpn_loss_cls:{:.6f}".format(rpn_loss_cls))
             # print("rpn_loss_box:{:.6f}".format(rpn_loss_box))
             # print("loss_cls:{:.6f}".format(loss_cls))
             # print("loss_box:{:.6f}".format(loss_box))
-            # print("dc_loss:{:.6f}".format(dc_loss))
+            print("dc_loss:{:.6f}".format(dc_loss))
             # print("da_conv_loss:{:.6f}".format(da_conv_loss))
             # print("da_CR_loss:{:.6f}".format(da_CR_loss))
 

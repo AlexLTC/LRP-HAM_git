@@ -36,12 +36,12 @@ def get_minibatch(roidb, num_classes):
     print("----------------------------------------Show image name:{}".format(im_name))
     if im_name.find("target_") == -1: # synthia image
         blobs['need_backprop'] = np.zeros((1,1),dtype=np.int32)
-        blobs['dc_label'] = np.zeros((1, 1),dtype=np.float32)
+        blobs['dc_label'] = np.zeros((1, 1),dtype=np.int32)
         # print("blobs's need_backprop & dc_label have enter")
         # print(blobs['need_backprop'])
     else: # pascal image
         blobs['need_backprop'] = np.ones((1,1),dtype=np.int32)  
-        blobs['dc_label'] = np.ones((1, 1),dtype=np.float32)
+        blobs['dc_label'] = np.ones((1, 1),dtype=np.int32)
 
 #----------------DA end-----------------------------
 

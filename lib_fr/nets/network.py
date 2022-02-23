@@ -321,7 +321,9 @@ class Network(object):
             #                              lambda: self._compute_label_predict_loss()
 
             # RPN, class loss
-            rpn_cls_score = self._predictions['rpn_cls_score_reshape']
+            rpn_cls_score = tf.cond(self._is_target,
+                                    lambda: tf.stop_gradient(self._predictions['rpn_cls_score_reshape']),
+                                    lambda: self._predictions['rpn_cls_score_reshape']) 
             rpn_label = self._anchor_targets['rpn_labels']
 
             rpn_cls_score = tf.reshape(rpn_cls_score, [-1, 2])
@@ -329,55 +331,69 @@ class Network(object):
             rpn_select = tf.where(tf.not_equal(rpn_label, -1))
             rpn_cls_score = tf.reshape(tf.gather(rpn_cls_score, rpn_select), [-1, 2])
             rpn_label = tf.reshape(tf.gather(rpn_label, rpn_select), [-1])
-            # rpn_cross_entropy = tf.reduce_mean(
-            #     tf.nn.sparse_softmax_cross_entropy_with_logits(logits=rpn_cls_score, labels=rpn_label))
-            rpn_cross_entropy = tf.cond(self._is_target,
-                                        lambda: tf.stop_gradient(
-                                            tf.nn.sparse_softmax_cross_entropy_with_logits(logits=rpn_cls_score, 
-                                                                                           labels=rpn_label)),
-                                        lambda: tf.nn.sparse_softmax_cross_entropy_with_logits(logits=rpn_cls_score, 
-                                                                                               labels=rpn_label))
-            rpn_cross_entropy = tf.reduce_mean(rpn_cross_entropy)
+            rpn_cross_entropy = tf.reduce_mean(
+                tf.nn.sparse_softmax_cross_entropy_with_logits(logits=rpn_cls_score, labels=rpn_label))
+            # rpn_cross_entropy = tf.cond(self._is_target,
+            #                             lambda: tf.stop_gradient(
+            #                                 tf.nn.sparse_softmax_cross_entropy_with_logits(logits=rpn_cls_score, 
+            #                                                                                labels=rpn_label)),
+            #                             lambda: tf.nn.sparse_softmax_cross_entropy_with_logits(logits=rpn_cls_score, 
+            #                                                                                    labels=rpn_label))
+            # rpn_cross_entropy = tf.reduce_mean(rpn_cross_entropy)
 
             # RPN, bbox loss
-            rpn_bbox_pred = self._predictions['rpn_bbox_pred']
+            rpn_bbox_pred = tf.cond(self._is_target, 
+                                    lambda: tf.stop_gradient(self._predictions['rpn_bbox_pred']),
+                                    lambda: self._predictions['rpn_bbox_pred'])
             rpn_bbox_targets = self._anchor_targets['rpn_bbox_targets']
-            rpn_bbox_inside_weights = self._anchor_targets['rpn_bbox_inside_weights']
-            rpn_bbox_outside_weights = self._anchor_targets['rpn_bbox_outside_weights']
-            #  rpn_loss_box = self._smooth_l1_loss(rpn_bbox_pred, rpn_bbox_targets, rpn_bbox_inside_weights,
-            #                                          rpn_bbox_outside_weights, sigma=sigma_rpn, dim=[1, 2, 3])
+            rpn_bbox_inside_weights = tf.cond(self._is_target,
+                                              lambda: tf.stop_gradient(self._anchor_targets['rpn_bbox_inside_weights']),
+                                              lambda: self._anchor_targets['rpn_bbox_inside_weights'])
+            rpn_bbox_outside_weights = tf.cond(self._is_target,
+                                               lambda: tf.stop_gradient(self._anchor_targets['rpn_bbox_outside_weights']),
+                                               lambda: self._anchor_targets['rpn_bbox_outside_weights'])
+            rpn_loss_box = self._smooth_l1_loss(rpn_bbox_pred, rpn_bbox_targets, rpn_bbox_inside_weights,
+                                                    rpn_bbox_outside_weights, sigma=sigma_rpn, dim=[1, 2, 3])
             # if is target data, stop bbox loss gradient
-            rpn_loss_box =  tf.cond(self._is_target,
-                                    lambda: tf.stop_gradient(
-                                                self._smooth_l1_loss(rpn_bbox_pred, rpn_bbox_targets, rpn_bbox_inside_weights,
-                                                                     rpn_bbox_outside_weights, sigma=sigma_rpn, dim=[1, 2, 3])),
-                                    lambda: self._smooth_l1_loss(rpn_bbox_pred, rpn_bbox_targets, rpn_bbox_inside_weights,
-                                                                 rpn_bbox_outside_weights, sigma=sigma_rpn, dim=[1, 2, 3]))
+            # rpn_loss_box =  tf.cond(self._is_target,
+            #                         lambda: tf.stop_gradient(
+            #                                     self._smooth_l1_loss(rpn_bbox_pred, rpn_bbox_targets, rpn_bbox_inside_weights,
+            #                                                          rpn_bbox_outside_weights, sigma=sigma_rpn, dim=[1, 2, 3])),
+            #                         lambda: self._smooth_l1_loss(rpn_bbox_pred, rpn_bbox_targets, rpn_bbox_inside_weights,
+            #                                                      rpn_bbox_outside_weights, sigma=sigma_rpn, dim=[1, 2, 3]))
 
             # RCNN, class loss
-            cls_score = self._predictions["cls_score"]
+            cls_score = tf.cond(self._is_target,
+                                lambda: tf.stop_gradient(self._predictions["cls_score"]),
+                                lambda: self._predictions['cls_score'])
             label = tf.reshape(self._proposal_targets["labels"], [-1])
-            # cross_entropy = tf.reduce_mean(
-            #     tf.nn.sparse_softmax_cross_entropy_with_logits(logits=cls_score, labels=label))
+            cross_entropy = tf.reduce_mean(
+                tf.nn.sparse_softmax_cross_entropy_with_logits(logits=cls_score, labels=label))
             # if is target data, stop RCNN ce loss gradient
-            cross_entropy =  tf.cond(self._is_target,
-                                     lambda: tf.stop_gradient(
-                                                tf.nn.sparse_softmax_cross_entropy_with_logits(logits=cls_score, 
-                                                                                               labels=label)),
-                                     lambda: tf.nn.sparse_softmax_cross_entropy_with_logits(logits=cls_score, 
-                                                                                            labels=label))
-            cross_entropy = tf.reduce_mean(cross_entropy)
+            # cross_entropy =  tf.cond(self._is_target,
+            #                          lambda: tf.stop_gradient(
+            #                                     tf.nn.sparse_softmax_cross_entropy_with_logits(logits=cls_score, 
+            #                                                                                    labels=label)),
+            #                          lambda: tf.nn.sparse_softmax_cross_entropy_with_logits(logits=cls_score, 
+            #                                                                                 labels=label))
+            # cross_entropy = tf.reduce_mean(cross_entropy)
 
             # RCNN, bbox loss
-            bbox_pred = self._predictions['bbox_pred']
+            bbox_pred = tf.cond(self._is_target,
+                                lambda: tf.stop_gradient(self._predictions['bbox_pred']),
+                                lambda: self._predictions['bbox_pred'])
             bbox_targets = self._proposal_targets['bbox_targets']
-            bbox_inside_weights = self._proposal_targets['bbox_inside_weights']
-            bbox_outside_weights = self._proposal_targets['bbox_outside_weights']
-            # loss_box = self._smooth_l1_loss(bbox_pred, bbox_targets, bbox_inside_weights, bbox_outside_weights)
+            bbox_inside_weights = tf.cond(self._is_target,
+                                          lambda: tf.stop_gradient(self._proposal_targets['bbox_inside_weights']),
+                                          lambda: self._proposal_targets['bbox_inside_weights'])
+            bbox_outside_weights = tf.cond(self._is_target,
+                                           lambda: tf.stop_gradient(self._proposal_targets['bbox_outside_weights']),
+                                           lambda: self._proposal_targets['bbox_outside_weights'])
+            loss_box = self._smooth_l1_loss(bbox_pred, bbox_targets, bbox_inside_weights, bbox_outside_weights)
             # if is target data, stop RCNN bbox loss gradient
-            loss_box =  tf.cond(self._is_target,
-                                lambda: tf.stop_gradient(self._smooth_l1_loss(bbox_pred, bbox_targets, bbox_inside_weights, bbox_outside_weights)),
-                                lambda: self._smooth_l1_loss(bbox_pred, bbox_targets, bbox_inside_weights, bbox_outside_weights))
+            # loss_box =  tf.cond(self._is_target,
+            #                     lambda: tf.stop_gradient(self._smooth_l1_loss(bbox_pred, bbox_targets, bbox_inside_weights, bbox_outside_weights)),
+            #                     lambda: self._smooth_l1_loss(bbox_pred, bbox_targets, bbox_inside_weights, bbox_outside_weights))
 
             self._losses['cross_entropy'] = cross_entropy
             self._losses['loss_box'] = loss_box
@@ -391,8 +407,10 @@ class Network(object):
             dc_ip3 = self._predictions['dc_ip3']
             dc_label_resize = self._label_resize_layer(dc_ip3)
             dc_loss = tf.reduce_mean(
-                    tf.nn.sigmoid_cross_entropy_with_logits(logits=dc_ip3, 
-                                                            labels=dc_label_resize))
+                    tf.nn.sparse_softmax_cross_entropy_with_logits(logits=dc_ip3, 
+                                                                   labels=dc_label_resize))
+            self._variables_to_fix['dc_ip3'] = dc_ip3
+            self._variables_to_fix['dc_label_resize'] = dc_label_resize
             # image-level loss
             # da_score_ss = self._predictions['da_score_ss']
             # da_label_ss_resize = self._resize_sslb(da_score_ss) 
@@ -435,11 +453,12 @@ class Network(object):
 
     def _label_resize_layer(self, dc_ip3):
         # from caffe's label_resize_layer.py
-        feats = dc_ip3  # (256, 1)
+        feats = dc_ip3  # (256, 2)
         lbs = self._dc_label  # (1, 1)
         
         feats_shape = tf.shape(feats)
         dc_label_resize = tf.tile(lbs, [feats_shape[0], 1])
+        dc_label_resize = tf.reshape(dc_label_resize, [-1])
 
         # print("feats (type, shape[0]): ({}, {});".format(type(feats), feats.shape[0]))
         # print("feats: {}".format(feats))
@@ -549,7 +568,7 @@ class Network(object):
         self._image = tf.placeholder(tf.float32, shape=[1, None, None, 3])
         self._im_info = tf.placeholder(tf.float32, shape=[3])
         self._gt_boxes = tf.placeholder(tf.float32, shape=[None, 5])
-        self._dc_label = tf.placeholder(tf.float32, shape=[1, 1])
+        self._dc_label = tf.placeholder(tf.int32, shape=[1, 1])
         self._need_backprop = tf.placeholder(tf.int32, shape=[1, 1])
         self._is_target = tf.reshape(tf.equal(self._dc_label, 1), ())
         self._tag = tag
@@ -662,8 +681,10 @@ class Network(object):
                      self._dc_label: blobs['dc_label'],
                      self._need_backprop: blobs['need_backprop']}
         # is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, da_conv_loss, da_CR_loss, loss, _ = \
-        is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, loss, _ = \
+        is_target, dc_ip3, dc_label_resize, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, loss, _ = \
                 sess.run([self._is_target,
+                          self._variables_to_fix['dc_ip3'],
+                          self._variables_to_fix['dc_label_resize'],
                           self._losses["rpn_cross_entropy"],
                           self._losses['rpn_loss_box'],
                           self._losses['cross_entropy'],
@@ -676,7 +697,7 @@ class Network(object):
                           feed_dict=feed_dict)
 
         # return is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, da_conv_loss, da_CR_loss, loss
-        return is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, loss
+        return is_target, dc_ip3, dc_label_resize, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, loss
 
 
     def train_step_with_summary(self, sess, blobs, train_op):
@@ -686,8 +707,10 @@ class Network(object):
                      self._dc_label: blobs['dc_label'],
                      self._need_backprop: blobs['need_backprop']}
         # is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, da_conv_loss, da_CR_loss,loss, summary, _ = \
-        is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, loss, summary, _ = \
+        is_target, dc_ip3, dc_label_resize, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, loss, summary, _ = \
                 sess.run([self._is_target,
+                          self._variables_to_fix['dc_ip3'],
+                          self._variables_to_fix['dc_label_resize'],
                           self._losses["rpn_cross_entropy"],
                           self._losses['rpn_loss_box'],
                           self._losses['cross_entropy'],
@@ -701,7 +724,7 @@ class Network(object):
                           feed_dict=feed_dict)
         
         # return is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, da_conv_loss, da_CR_loss, loss, summary
-        return is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, loss, summary
+        return is_target, dc_ip3, dc_label_resize, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, loss, summary
 
 
     def train_step_no_return(self, sess, blobs, train_op):
