@@ -76,8 +76,8 @@ case ${DATASET} in
     P4=True
     ;;
   polyp)
-    TRAIN_IMDB="polyp_2007_trainval"
-    TEST_IMDB="polyp_2007_test"
+    TRAIN_IMDB="polyp_2007_train"
+    TEST_IMDB="polyp_2007_val"
     STEPSIZE="[50000]"
     ITERS=70000
     ANCHOR_SIZES="[128,256,512]"

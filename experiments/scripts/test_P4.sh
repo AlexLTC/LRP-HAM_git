@@ -75,7 +75,7 @@ case ${DATASET} in
     ;;
 
   polyp)
-    TRAIN_IMDB="polyp_2007_trainval"
+    TRAIN_IMDB="polyp_2007_train"
     TEST_IMDB="polyp_2007_test"
     ITERS=70000
     ANCHOR_SIZES="[128,256,512]"

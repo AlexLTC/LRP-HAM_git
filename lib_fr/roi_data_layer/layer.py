@@ -56,6 +56,7 @@ class RoIDataLayer(object):
             self._perm = inds
         else:
             if not self._random:  # train mode
+                print("------------------------------------Show RoIDataLayer Check Result-------------------------------")
                 # divide source & target from roidb
                 self._source_inds = [i for i in range(len(self._roidb)) if self._roidb[i]['image'].find('source') != -1]
                 self._target_inds = [i for i in range(len(self._roidb)) if self._roidb[i]['image'].find('target') != -1]
@@ -64,25 +65,32 @@ class RoIDataLayer(object):
                 # print("target index len: {}".format(len(self._target_inds)))
                 print("target index: {}".format(self._target_inds[:5]))
 
-                assert len(self._source_inds) == 1128, 'source index length error in layer.py'
-                assert len(self._target_inds) == 746, 'target index length error in layer.py'
+                assert len(self._source_inds) == 24314, 'source index length error in layer.py'
+                assert len(self._target_inds) == 1128, 'target index length error in layer.py'
+                
 
                 # shuffle source & target index independently
                 source_perm = np.random.permutation(self._source_inds)
                 target_perm = np.random.permutation(self._target_inds)
+                while(len(source_perm)/len(target_perm) > 1):
+                    tmp_perm = np.random.permutation(self._target_inds)
+                    target_perm = np.concatenate((target_perm, tmp_perm), 0)
+
+                target_perm = target_perm[:len(source_perm)]
                 print("source perm: {}".format(source_perm[:5]))
                 print("target perm: {}".format(target_perm[:5]))
 
-                # concate source & target index (length depends on target dataset with less data)
+                # concate source & target index (length depends on source dataset)
+                # if reach target data max number (shuffle target data then concate)
                 perm_concate = []
-                for i in range(len(self._target_inds)):
+                for i in range(len(source_perm)):
                     perm_concate.append(source_perm[i])
                     perm_concate.append(target_perm[i])
 
                 print("perm concate length: {}".format(len(perm_concate)))
                 print("perm concate: {}".format(perm_concate[:5]))
 
-                assert len(perm_concate) == 1492, "perm concate length error in layer.py"
+                assert len(perm_concate) == 48628, "perm concate length error in layer.py"
 
                 self._perm = perm_concate
             else:  # val mode    

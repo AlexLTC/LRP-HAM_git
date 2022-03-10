@@ -140,6 +140,7 @@ class SolverWrapper(object):
 
             # Compute the gradients with regard to the loss
             gvs = self.optimizer.compute_gradients(loss)
+
             # Double the gradient of the bias if set
             if cfg.TRAIN.DOUBLE_BIAS:
                 final_gvs = []
@@ -151,8 +152,42 @@ class SolverWrapper(object):
                         if not np.allclose(scale, 1.0):
                             grad = tf.multiply(grad, scale)
                         final_gvs.append((grad, var))
+                
+                da_gvs = []
+                with tf.variable_scope('Divide_DA_weights') as scope:
+                    for grad, var in final_gvs:
+                        if '/unit' in var.name:
+                            da_gvs.append((grad, var))
+
+                        if 'pyramid' in var.name:
+                            da_gvs.append((grad, var))
+
+                        if '/da' in var.name:
+                            da_gvs.append((grad, var))
+
+                        if '/dc' in var.name:
+                            da_gvs.append((grad, var))
+
+                da_train_op = self.optimizer.apply_gradients(da_gvs)
                 train_op = self.optimizer.apply_gradients(final_gvs)
             else:
+                da_gvs = []
+                with tf.variable_scope('Divide_DA_weights') as scope:
+                    for grad, var in gvs:
+                        if '/unit' in var.name:
+                            da_gvs.append((grad, var))
+
+                        if 'pyramid' in var.name:
+                            da_gvs.append((grad, var))
+
+                        if '/da' in var.name:
+                            da_gvs.append((grad, var))
+
+                        if '/dc' in var.name:
+                            da_gvs.append((grad, var))
+
+
+                da_train_op = self.optimizer.apply_gradients(da_gvs)
                 train_op = self.optimizer.apply_gradients(gvs)
 
             # We will handle the snapshots ourselves
@@ -161,7 +196,7 @@ class SolverWrapper(object):
             self.writer = tf.summary.FileWriter(self.tbdir, sess.graph)
             self.valwriter = tf.summary.FileWriter(self.tbvaldir)
 
-        return lr, train_op
+        return lr, train_op, da_train_op
 
     def find_previous(self):
         sfiles = os.path.join(self.output_dir, cfg.TRAIN.SNAPSHOT_PREFIX + '_iter_*.ckpt.meta')
@@ -256,7 +291,13 @@ class SolverWrapper(object):
         self.data_layer_val = RoIDataLayer(self.valroidb, self.imdb.num_classes, random=True)
 
         # Construct the computation graph
-        lr, train_op = self.construct_graph(sess)
+        # train_op for original FRCNN
+        # da_train_op stop rpn & label predictor's weights update
+        lr, train_op, da_train_op = self.construct_graph(sess)
+        # print("----------------------show train_op")
+        # print(train_op)
+        # print("-----------------show da_train_op")
+        # print(da_train_op)
 
         # Find previous snapshots if there is any to restore from
         lsf, nfiles, sfiles = self.find_previous()
@@ -277,6 +318,9 @@ class SolverWrapper(object):
         stepsizes.reverse()
         next_stepsize = stepsizes.pop()
         while iter < max_iters + 1:
+            # Set linear lambda(reference from GRL MNIST Test)
+            l = 2. / (1. + np.exp(-10. * (iter/(max_iters+1)))) - 1
+
             # Learning rate
             if iter == next_stepsize + 1:
                 # Add snapshot here before reducing the learning rate
@@ -300,9 +344,19 @@ class SolverWrapper(object):
             now = time.time()
             if iter == 1 or now - last_summary_time > cfg.TRAIN.SUMMARY_INTERVAL:
                 # Compute the graph with summary
-                # is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, da_conv_loss, da_CR_loss, total_loss, summary = \
-                is_target, dc_ip3, dc_label_resize, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, total_loss, summary = \
-                    self.net.train_step_with_summary(sess, blobs, train_op)
+                # image is source, use train_op
+                # image is target, use da_train_op
+                if blobs['dc_label'] == 0:
+                    self.logger.info("iter: {}, summary source".format(iter))
+                    # is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, da_conv_loss, da_CR_loss, total_loss, summary = \
+                    is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, total_loss, summary = \
+                        self.net.train_step_with_summary(sess, blobs, train_op, l)
+                else:
+                    self.logger.info("iter: {}, summary target".format(iter))
+                    is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, total_loss, summary = \
+                        self.net.train_step_with_summary(sess, blobs, da_train_op, l)
+
+
                 self.writer.add_summary(summary, float(iter))
                 # Also check the summary on the validation set
                 blobs_val = self.data_layer_val.forward()
@@ -312,8 +366,14 @@ class SolverWrapper(object):
             else:
                 # Compute the graph without summary
                 # is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, da_conv_loss, da_CR_loss, total_loss = \
-                is_target, dc_ip3, dc_label_resize, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, total_loss = \
-                    self.net.train_step(sess, blobs, train_op)
+                if blobs['dc_label'] == 0:
+                    is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, total_loss = \
+                        self.net.train_step(sess, blobs, train_op, l)
+                else:
+                    is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, total_loss = \
+                        self.net.train_step(sess, blobs, da_train_op, l)
+
+
             timer.toc()
 
             # Display training information
@@ -323,32 +383,41 @@ class SolverWrapper(object):
                                  '>>> rpn_loss_box: %.6f\n'
                                  '>>> loss_cls: %.6f\n'
                                  '>>> loss_box: %.6f\n'
-                                 '>>> dc_loss: %.6f\n'
-                                 # '>>> da_conv_loss: %.6f\n'
+                                 '>>> lambda: %.6f\n'
+                                 # '>>> dc_loss: %.6f\n'
+                                 '>>> da_conv_loss: %.6f\n'
                                  # '>>> da_CR_loss: %.6f\n'
                                  '>>> lr: %f' % \
                                  (iter, max_iters, total_loss, 
                                   rpn_loss_cls, rpn_loss_box, loss_cls, loss_box,
                                   # dc_loss, da_conv_loss, da_CR_loss,
+                                  l,
                                   dc_loss,
                                   lr.eval()))
                 self.logger.info('speed: {:.3f}s / iter'.format(timer.average_time))
+                self.logger.info('\n')
+
             print("iter: {}".format(iter))
-            print("is_target: {}".format(is_target))
-            print("dc_ip3: {}".format(np.transpose(dc_ip3)))
-            print("dc_label_resize: {}".format(np.transpose(dc_label_resize)))
+            print("domain: {}".format("target" if is_target else "source"))
+            print("train operaiton type: {}".format("train_op" if blobs['dc_label'] == 0 else "da_train_op"))
+            # print("dc loss :{}".format(dc_loss))
+            # print("total loss: {}".format(total_loss))
+            # print("dc_ip3: {}".format(np.transpose(dc_ip3)))
+            # print("dc_label_resize: {}".format(np.transpose(dc_label_resize)))
             # print("rpn_ce has grad? {}".format(rpn_loss_cls))
             # print("rpn_loss_box has grad? {}".format(rpn_loss_box))
             # print("loss_cls has grad? {}".format(loss_cls))
             # print("loss_box has grad? {}".format(loss_box))
-            # print("total_loss:{:.6f}".format(total_loss))
-            # print("rpn_loss_cls:{:.6f}".format(rpn_loss_cls))
-            # print("rpn_loss_box:{:.6f}".format(rpn_loss_box))
-            # print("loss_cls:{:.6f}".format(loss_cls))
-            # print("loss_box:{:.6f}".format(loss_box))
+            print("total_loss:{:.6f}".format(total_loss))
+            print("rpn_loss_cls:{:.6f}".format(rpn_loss_cls))
+            print("rpn_loss_box:{:.6f}".format(rpn_loss_box))
+            print("loss_cls:{:.6f}".format(loss_cls))
+            print("loss_box:{:.6f}".format(loss_box))
             print("dc_loss:{:.6f}".format(dc_loss))
             # print("da_conv_loss:{:.6f}".format(da_conv_loss))
             # print("da_CR_loss:{:.6f}".format(da_CR_loss))
+            print("lambda: {}".format(l))
+            print('\n')
 
             # Snapshotting
             if iter % cfg.TRAIN.SNAPSHOT_ITERS == 0:

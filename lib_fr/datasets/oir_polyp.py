@@ -208,7 +208,7 @@ class polyp(imdb):
         # Move to appropriate folder for easy upload to eval server
         file_path = os.path.join(self._devkit_path, 'results', 'VOC' + self._year,
                                  'Main')
-
+        # making directory to avoid error
         if not os.path.exists(file_path):
             os.makedirs(file_path)
 

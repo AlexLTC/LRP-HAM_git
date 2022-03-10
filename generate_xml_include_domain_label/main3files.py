@@ -6,8 +6,8 @@ import random
 #saveBasePath=r"/home/dennischang/LRP-HAM/data/throat_uvula_dataset2007/VOC2007/ImageSets/Main"
 
 """alex"""
-xmlfilepath=r'/media/xuus/A45ED35B5ED324B8/alex/for_train_data/20220115/source/xml'
-saveBasePath=r"/media/xuus/A45ED35B5ED324B8/alex/for_train_data/20220115/source_Main"
+xmlfilepath=r'/media/xuus/A45ED35B5ED324B8/LRP-HAM_git/data/polyp_dataset2007/VOC2007/Annotations'
+saveBasePath=r"/media/xuus/A45ED35B5ED324B8/LRP-HAM_git/data/polyp_dataset2007/VOC2007/ImageSets/Main"
 
 trainval_percent=0.8
 train_percent=0.7
@@ -16,14 +16,16 @@ total_xml = os.listdir(xmlfilepath)
 #print(total_xml)
 
 # source or target 的檔名都是由數字排序,因此擷取數字排序與分類即可
-num=len(total_xml)    
+num=len(total_xml)
+assert num==15197, "file numbers error"
 list=range(num)
 
-# source 只有在 trainval 部份，而 target 才會分佈在 trainval 與 test 中
-if 'source_' in total_xml:
-    trainval_size = int(num*trainval_percent)
-else:  # target
-    trainval_size =int(num*trainval_percent)  # trainval 佔所有 xml data 數量的 0.8
+# # source 只有在 trainval 部份，而 target 才會分佈在 trainval 與 test 中
+# if 'source_' in total_xml:
+#     trainval_size = int(num*trainval_percent)
+# else:  # target
+#     trainval_size =int(num*trainval_percent)  # trainval 佔所有 xml data 數量的 0.8
+trainval_size = int(num*trainval_percent)
 train_size = int(trainval_size*train_percent)  # train 佔 trainval xml data 檔案數量 0.7
 trainval = random.sample(list,trainval_size)  
 train=random.sample(trainval,train_size)  

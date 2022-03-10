@@ -33,15 +33,15 @@ def get_minibatch(roidb, num_classes):
 
 #-----------------DA Part---------------------------
     im_name = roidb[0]['image']
-    print("----------------------------------------Show image name:{}".format(im_name))
+    # print("----------------------------------------Show image name:{}".format(im_name))
     if im_name.find("target_") == -1: # synthia image
         blobs['need_backprop'] = np.zeros((1,1),dtype=np.int32)
-        blobs['dc_label'] = np.zeros((1, 1),dtype=np.int32)
+        blobs['dc_label'] = np.zeros((1, 1),dtype=np.float32)
         # print("blobs's need_backprop & dc_label have enter")
         # print(blobs['need_backprop'])
     else: # pascal image
         blobs['need_backprop'] = np.ones((1,1),dtype=np.int32)  
-        blobs['dc_label'] = np.ones((1, 1),dtype=np.int32)
+        blobs['dc_label'] = np.ones((1, 1),dtype=np.float32)
 
 #----------------DA end-----------------------------
 
@@ -59,10 +59,13 @@ def get_minibatch(roidb, num_classes):
     gt_boxes[:, 0:4] = roidb[0]['boxes'][gt_inds, :] * im_scales[0]
     gt_boxes[:, 4] = roidb[0]['gt_classes'][gt_inds]
     blobs['gt_boxes'] = gt_boxes
+    assert not np.any(np.isnan(blobs['gt_boxes'])), "gt_boxes is nan"
+
     blobs['im_info'] = np.array(
         [im_blob.shape[1], im_blob.shape[2], im_scales[0]],
         dtype=np.float32)
-
+    assert not np.any(np.isnan(blobs['im_info'])), "im_info is nan"
+    
     return blobs
 
 def _get_image_blob(roidb, scale_inds):

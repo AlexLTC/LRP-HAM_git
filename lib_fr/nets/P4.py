@@ -192,8 +192,14 @@ class P4(Network):
     def _head_to_tail(self, pool5, is_training, reuse=None):
         with tf.variable_scope('build_fc_layers'):
             inputs = slim.flatten(inputs=pool5, scope='flatten_inputs')
-            fc6 = slim.fully_connected(inputs, num_outputs=1024, scope='fc6')
-            fc7 = slim.fully_connected(fc6, num_outputs=1024, scope='fc7')
+            fc6 = slim.fully_connected(inputs, 
+                                       num_outputs=1024, 
+                                       trainable=is_training, 
+                                       scope='fc6')
+            fc7 = slim.fully_connected(fc6,
+                                       num_outputs=1024,
+                                       trainable=is_training,
+                                       scope='fc7')
         return fc7
 
     @tf.custom_gradient
@@ -211,46 +217,54 @@ class P4(Network):
         return _lr_mult
 
 
-    def _tail_to_da(self, fc7, is_training, reuse=None):
+    def _tail_to_da(self, fc7, is_training, initializer, reuse=None):
         with tf.variable_scope('instance-level_DA'):
             # -0.1 is scale-factor for GRL
-            feat = self.lr_mult(-0.1)(fc7)
+            # initializer is std=0.01
+            feat = self.lr_mult(tf.negative(self.l))(fc7)
             # for DA FRCNN need to set weights lr to (lr*10), bias lr to (lr*20)
             # from Caffe1 DA-FRCNN concept
-            w_init = tf.truncated_normal_initializer(stddev=0.01)
-            w_last_init = tf.truncated_normal_initializer(stddev=0.05)
-            dc_ip1 = slim.fully_connected(fc7, 
+            w_init_last = tf.random_normal_initializer(stddev=0.05)
+
+            dc_ip1 = slim.fully_connected(feat, 
                                           num_outputs=1024,
-                                          weights_initializer=w_init,
+                                          weights_initializer=initializer,
+                                          trainable=is_training,
                                           scope='dc_ip1')
             dc_ip1 = slim.dropout(dc_ip1, 0.5, is_training=is_training, scope='dc_drop1')
             dc_ip2 = slim.fully_connected(dc_ip1,
                                           num_outputs=1024,
-                                          weights_initializer=w_init,
+                                          weights_initializer=initializer,
+                                          trainable=is_training,
                                           scope='dc_ip2')
             dc_ip2 = slim.dropout(dc_ip2, 0.5, is_training=is_training, scope='dc_drop2')
             dc_ip3 = slim.fully_connected(dc_ip2,
-                                          num_outputs=2,
-                                          weights_initializer=w_last_init,
+                                          num_outputs=1,
+                                          activation_fn=None,
+                                          weights_initializer=w_init_last,
+                                          trainable=is_training,
                                           scope='dc_ip3')
         return dc_ip3
 
 
-    def _head_to_daConv(self, net_conv, is_training, reuse=None):
+    def _head_to_daConv(self, net_conv, is_training, initializer_bbox, reuse=None):
         # ss means "semantic segamentation section"
         with tf.variable_scope('image-level_DA'): 
             # -0.1 is scale-factor for GRL
-            w_init = tf.truncated_normal_initializer(stddev=0.001) 
+            # initializer_bbox is std=0.001
             da_conv_grl = self.lr_mult(-0.1)(net_conv)
             da_conv_ss_6 = slim.conv2d(da_conv_grl, num_outputs=512,
                                        kernel_size=[1, 1],
                                        stride=1, padding='VALID',
-                                       weights_initializer=w_init,
+                                       weights_initializer=initializer_bbox,
+                                       trainable=is_training,
                                        scope='da_conv_ss_6')
             da_score_ss = slim.conv2d(da_conv_ss_6, num_outputs=2,
                                       kernel_size=[1, 1],
                                       stride=1, padding='VALID',
-                                      weights_initializer=w_init,
+                                      activation_fn=None,
+                                      weights_initializer=initializer_bbox,
+                                      trainable=is_training,
                                       scope='da_conv_ss')
         return da_score_ss
 

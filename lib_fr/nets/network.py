@@ -245,6 +245,7 @@ class Network(object):
 
         # net_conv output : Tensor("build_pyramid/fuse_P4/BiasAdd:0", shape=(1, ?, ?, 256), dtype=float32))"")
         net_conv = self._image_to_head(is_training)  # P4 information (from lib_fr/nets/P4 function _image_to_head)
+        
         with tf.variable_scope(self._scope, self._scope):
             # generate_anchors
             assert len(cfg.ANCHOR_STRIDES) == 1, "Non-FPN should have a single ANCHOR_STRIDE"
@@ -261,7 +262,7 @@ class Network(object):
                 raise NotImplementedError
 
         # fc7 output: Tensor("build_fc_layers/fc7/Relu:0", shape=(256, 1024), dtype=float32))
-        fc7 = self._head_to_tail(pool5, is_training)
+        fc7 = self._head_to_tail(pool5, is_training, initializer)
         with tf.variable_scope(self._scope, self._scope):
             # region classification
             cls_prob, bbox_pred = self._region_classification(fc7, is_training,
@@ -276,14 +277,11 @@ class Network(object):
         #
         # dc_ip3 output: 
         # Tensor("instance-level_DA/dc_ip3/Relu:0", shape=(256, 1), dtype=float32)
-        dc_ip3 = self._tail_to_da(fc7, is_training)
+        dc_ip3 = self._tail_to_da(fc7, is_training, initializer)
+        #
         # da_score_ss output: 
         # Tensor("image-level_DA/da_conv_ss/Relu:0", shape=(1, ?, ?, 2), dtype=float32)
-        # da_score_ss = self._head_to_daConv(net_conv, is_training)
-        # print("dc_ip3 looks like:")
-        # print(dc_ip3)
-        # print("da_score_ss looks like:")
-        # print(da_score_ss)
+        # da_score_ss = self._head_to_daConv(net_conv, is_training, initializer_bbox)
         self._predictions['dc_ip3'] = dc_ip3
         # self._predictions['da_score_ss'] = da_score_ss
 
@@ -314,16 +312,11 @@ class Network(object):
     
     def _add_losses(self, sigma_rpn=3.0):
         with tf.variable_scope('LOSS_' + self._tag) as scope:
-            # source data then compute label predict loss,
-            # target don't
-            # label_predict_loss = tf.cond(tf.reshape(tf.equal(self._dc_label, 1), ()), 
-            #                              lambda: 0.0, 
-            #                              lambda: self._compute_label_predict_loss()
-
+            # source data then compute label predict loss
+            
             # RPN, class loss
-            rpn_cls_score = tf.cond(self._is_target,
-                                    lambda: tf.stop_gradient(self._predictions['rpn_cls_score_reshape']),
-                                    lambda: self._predictions['rpn_cls_score_reshape']) 
+            rpn_cls_score = self._predictions['rpn_cls_score_reshape']
+            # rpn_label 僅透過原始的 anchor 的 IoU 值大小標出是 positive or negative
             rpn_label = self._anchor_targets['rpn_labels']
 
             rpn_cls_score = tf.reshape(rpn_cls_score, [-1, 2])
@@ -333,67 +326,27 @@ class Network(object):
             rpn_label = tf.reshape(tf.gather(rpn_label, rpn_select), [-1])
             rpn_cross_entropy = tf.reduce_mean(
                 tf.nn.sparse_softmax_cross_entropy_with_logits(logits=rpn_cls_score, labels=rpn_label))
-            # rpn_cross_entropy = tf.cond(self._is_target,
-            #                             lambda: tf.stop_gradient(
-            #                                 tf.nn.sparse_softmax_cross_entropy_with_logits(logits=rpn_cls_score, 
-            #                                                                                labels=rpn_label)),
-            #                             lambda: tf.nn.sparse_softmax_cross_entropy_with_logits(logits=rpn_cls_score, 
-            #                                                                                    labels=rpn_label))
-            # rpn_cross_entropy = tf.reduce_mean(rpn_cross_entropy)
 
             # RPN, bbox loss
-            rpn_bbox_pred = tf.cond(self._is_target, 
-                                    lambda: tf.stop_gradient(self._predictions['rpn_bbox_pred']),
-                                    lambda: self._predictions['rpn_bbox_pred'])
+            rpn_bbox_pred = self._predictions['rpn_bbox_pred']
             rpn_bbox_targets = self._anchor_targets['rpn_bbox_targets']
-            rpn_bbox_inside_weights = tf.cond(self._is_target,
-                                              lambda: tf.stop_gradient(self._anchor_targets['rpn_bbox_inside_weights']),
-                                              lambda: self._anchor_targets['rpn_bbox_inside_weights'])
-            rpn_bbox_outside_weights = tf.cond(self._is_target,
-                                               lambda: tf.stop_gradient(self._anchor_targets['rpn_bbox_outside_weights']),
-                                               lambda: self._anchor_targets['rpn_bbox_outside_weights'])
+            rpn_bbox_inside_weights = self._anchor_targets['rpn_bbox_inside_weights']
+            rpn_bbox_outside_weights = self._anchor_targets['rpn_bbox_outside_weights']
             rpn_loss_box = self._smooth_l1_loss(rpn_bbox_pred, rpn_bbox_targets, rpn_bbox_inside_weights,
                                                     rpn_bbox_outside_weights, sigma=sigma_rpn, dim=[1, 2, 3])
-            # if is target data, stop bbox loss gradient
-            # rpn_loss_box =  tf.cond(self._is_target,
-            #                         lambda: tf.stop_gradient(
-            #                                     self._smooth_l1_loss(rpn_bbox_pred, rpn_bbox_targets, rpn_bbox_inside_weights,
-            #                                                          rpn_bbox_outside_weights, sigma=sigma_rpn, dim=[1, 2, 3])),
-            #                         lambda: self._smooth_l1_loss(rpn_bbox_pred, rpn_bbox_targets, rpn_bbox_inside_weights,
-            #                                                      rpn_bbox_outside_weights, sigma=sigma_rpn, dim=[1, 2, 3]))
-
+           
             # RCNN, class loss
-            cls_score = tf.cond(self._is_target,
-                                lambda: tf.stop_gradient(self._predictions["cls_score"]),
-                                lambda: self._predictions['cls_score'])
+            cls_score = self._predictions['cls_score']
             label = tf.reshape(self._proposal_targets["labels"], [-1])
             cross_entropy = tf.reduce_mean(
                 tf.nn.sparse_softmax_cross_entropy_with_logits(logits=cls_score, labels=label))
-            # if is target data, stop RCNN ce loss gradient
-            # cross_entropy =  tf.cond(self._is_target,
-            #                          lambda: tf.stop_gradient(
-            #                                     tf.nn.sparse_softmax_cross_entropy_with_logits(logits=cls_score, 
-            #                                                                                    labels=label)),
-            #                          lambda: tf.nn.sparse_softmax_cross_entropy_with_logits(logits=cls_score, 
-            #                                                                                 labels=label))
-            # cross_entropy = tf.reduce_mean(cross_entropy)
-
+            
             # RCNN, bbox loss
-            bbox_pred = tf.cond(self._is_target,
-                                lambda: tf.stop_gradient(self._predictions['bbox_pred']),
-                                lambda: self._predictions['bbox_pred'])
+            bbox_pred = self._predictions['bbox_pred']
             bbox_targets = self._proposal_targets['bbox_targets']
-            bbox_inside_weights = tf.cond(self._is_target,
-                                          lambda: tf.stop_gradient(self._proposal_targets['bbox_inside_weights']),
-                                          lambda: self._proposal_targets['bbox_inside_weights'])
-            bbox_outside_weights = tf.cond(self._is_target,
-                                           lambda: tf.stop_gradient(self._proposal_targets['bbox_outside_weights']),
-                                           lambda: self._proposal_targets['bbox_outside_weights'])
+            bbox_inside_weights = self._proposal_targets['bbox_inside_weights']
+            bbox_outside_weights = self._proposal_targets['bbox_outside_weights']
             loss_box = self._smooth_l1_loss(bbox_pred, bbox_targets, bbox_inside_weights, bbox_outside_weights)
-            # if is target data, stop RCNN bbox loss gradient
-            # loss_box =  tf.cond(self._is_target,
-            #                     lambda: tf.stop_gradient(self._smooth_l1_loss(bbox_pred, bbox_targets, bbox_inside_weights, bbox_outside_weights)),
-            #                     lambda: self._smooth_l1_loss(bbox_pred, bbox_targets, bbox_inside_weights, bbox_outside_weights))
 
             self._losses['cross_entropy'] = cross_entropy
             self._losses['loss_box'] = loss_box
@@ -407,28 +360,31 @@ class Network(object):
             dc_ip3 = self._predictions['dc_ip3']
             dc_label_resize = self._label_resize_layer(dc_ip3)
             dc_loss = tf.reduce_mean(
-                    tf.nn.sparse_softmax_cross_entropy_with_logits(logits=dc_ip3, 
-                                                                   labels=dc_label_resize))
-            self._variables_to_fix['dc_ip3'] = dc_ip3
-            self._variables_to_fix['dc_label_resize'] = dc_label_resize
-            # image-level loss
+                    tf.nn.sigmoid_cross_entropy_with_logits(logits=dc_ip3, 
+                                                            labels=dc_label_resize))
+            # self._variables_to_fix['dc_ip3'] = dc_ip3
+            # self._variables_to_fix['dc_label_resize'] = dc_label_resize
+
+            # # image-level loss
             # da_score_ss = self._predictions['da_score_ss']
             # da_label_ss_resize = self._resize_sslb(da_score_ss) 
             # da_conv_loss = tf.reduce_mean(
             #         tf.nn.sparse_softmax_cross_entropy_with_logits(logits=da_score_ss,
             #                                                        labels=da_label_ss_resize))
+
             # consisitency regularization loss
             # resize_daConv_CR = self._resize_da_conv_score_for_CR(da_score_ss, dc_ip3)
             # da_CR_loss = tf.reduce_mean(tf.abs(tf.substract(resize_daConv_CR, dc_ip3)))  # l1 distance
 
-            # self._losses['dc_loss'] = dc_loss
             self._losses['dc_loss'] = dc_loss
+            # self._losses['da_conv_loss'] = da_conv_loss
             # self._losses['da_CR_loss'] = da_CR_loss
             da_components_loss = dc_loss  # dc_loss + da_conv_loss + da_CR_loss
             
             # --------------------DA Part End---------------------------
 
-            loss = tf.cond(self._is_target, 
+            loss = tf.cond(self._is_target,
+                           # target 訓練時只有 da loss，需要一個參數平衡，這邊先設置為5測試
                            lambda: da_components_loss, 
                            lambda: da_components_loss + label_predict_loss)
             regularization_loss = tf.add_n(tf.losses.get_regularization_losses(), 'regu')
@@ -453,12 +409,12 @@ class Network(object):
 
     def _label_resize_layer(self, dc_ip3):
         # from caffe's label_resize_layer.py
-        feats = dc_ip3  # (256, 2)
+        feats = dc_ip3  # (256, 1)
         lbs = self._dc_label  # (1, 1)
         
         feats_shape = tf.shape(feats)
         dc_label_resize = tf.tile(lbs, [feats_shape[0], 1])
-        dc_label_resize = tf.reshape(dc_label_resize, [-1])
+        # dc_label_resize = tf.reshape(dc_label_resize, [-1])
 
         # print("feats (type, shape[0]): ({}, {});".format(type(feats), feats.shape[0]))
         # print("feats: {}".format(feats))
@@ -568,9 +524,10 @@ class Network(object):
         self._image = tf.placeholder(tf.float32, shape=[1, None, None, 3])
         self._im_info = tf.placeholder(tf.float32, shape=[3])
         self._gt_boxes = tf.placeholder(tf.float32, shape=[None, 5])
-        self._dc_label = tf.placeholder(tf.int32, shape=[1, 1])
+        self._dc_label = tf.placeholder(tf.float32, shape=[1, 1])
         self._need_backprop = tf.placeholder(tf.int32, shape=[1, 1])
         self._is_target = tf.reshape(tf.equal(self._dc_label, 1), ())
+        self.l = tf.placeholder(tf.float32, shape=[])
         self._tag = tag
 
         self._num_classes = num_classes
@@ -660,7 +617,7 @@ class Network(object):
                                                          self._predictions['cls_prob'],
                                                          self._predictions['bbox_pred'],
                                                          self._predictions['rois']],
-                                                        feed_dict=feed_dict)
+                                                         feed_dict=feed_dict)
         return cls_score, cls_prob, bbox_pred, rois
 
     def get_summary(self, sess, blobs):
@@ -674,17 +631,18 @@ class Network(object):
 
         return summary
 
-    def train_step(self, sess, blobs, train_op):
+    def train_step(self, sess, blobs, train_op, l):
         feed_dict = {self._image: blobs['data'],
                      self._im_info: blobs['im_info'],
                      self._gt_boxes: blobs['gt_boxes'],
                      self._dc_label: blobs['dc_label'],
-                     self._need_backprop: blobs['need_backprop']}
+                     self._need_backprop: blobs['need_backprop'],
+                     self.l: l}
         # is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, da_conv_loss, da_CR_loss, loss, _ = \
-        is_target, dc_ip3, dc_label_resize, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, loss, _ = \
+        is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, loss, _ = \
                 sess.run([self._is_target,
-                          self._variables_to_fix['dc_ip3'],
-                          self._variables_to_fix['dc_label_resize'],
+                          # self._variables_to_fix['dc_ip3'],
+                          # self._variables_to_fix['dc_label_resize'],
                           self._losses["rpn_cross_entropy"],
                           self._losses['rpn_loss_box'],
                           self._losses['cross_entropy'],
@@ -697,20 +655,21 @@ class Network(object):
                           feed_dict=feed_dict)
 
         # return is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, da_conv_loss, da_CR_loss, loss
-        return is_target, dc_ip3, dc_label_resize, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, loss
+        return is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, loss
 
 
-    def train_step_with_summary(self, sess, blobs, train_op):
+    def train_step_with_summary(self, sess, blobs, train_op, l):
         feed_dict = {self._image: blobs['data'], 
                      self._im_info: blobs['im_info'],
                      self._gt_boxes: blobs['gt_boxes'],
                      self._dc_label: blobs['dc_label'],
-                     self._need_backprop: blobs['need_backprop']}
+                     self._need_backprop: blobs['need_backprop'],
+                     self.l: l}
         # is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, da_conv_loss, da_CR_loss,loss, summary, _ = \
-        is_target, dc_ip3, dc_label_resize, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, loss, summary, _ = \
+        is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, loss, summary, _ = \
                 sess.run([self._is_target,
-                          self._variables_to_fix['dc_ip3'],
-                          self._variables_to_fix['dc_label_resize'],
+                          # self._variables_to_fix['dc_ip3'],
+                          # self._variables_to_fix['dc_label_resize'],
                           self._losses["rpn_cross_entropy"],
                           self._losses['rpn_loss_box'],
                           self._losses['cross_entropy'],
@@ -724,7 +683,7 @@ class Network(object):
                           feed_dict=feed_dict)
         
         # return is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, da_conv_loss, da_CR_loss, loss, summary
-        return is_target, dc_ip3, dc_label_resize, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, loss, summary
+        return is_target, rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, dc_loss, loss, summary
 
 
     def train_step_no_return(self, sess, blobs, train_op):
