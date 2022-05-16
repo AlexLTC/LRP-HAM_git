@@ -5,13 +5,13 @@ from PIL import Image
 # path = '/home/dennischang/LRP-HAM/data/throat_uvula_dataset2007/VOC2007/20210116 Label/argument/'
 
 """alex"""
-path = '/media/xuus/A45ED35B5ED324B8/alex/for_train_data/20220115/source/'
+path = '/media/xuus/A45ED35B5ED324B8/alex/for_train_data/20220418/wrong_size/'
 
 # VEDAI 图像存储位置
 src_img_dir = path + 'gt'
 # VEDAI 图像的 ground truth 的 txt 文件存放位置
-src_txt_dir = path + "transform_to_polyps_txt"
-src_xml_dir = path + "transform_to_polyps_xml"  # output path
+src_txt_dir = path + "txt"
+src_xml_dir = path + "xml"  # output path
 
 if not os.path.exists(src_xml_dir):
     os.mkdir(src_xml_dir)

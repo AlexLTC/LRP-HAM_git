@@ -60,13 +60,13 @@ class RoIDataLayer(object):
                 # divide source & target from roidb
                 self._source_inds = [i for i in range(len(self._roidb)) if self._roidb[i]['image'].find('source') != -1]
                 self._target_inds = [i for i in range(len(self._roidb)) if self._roidb[i]['image'].find('target') != -1]
-                # print("source index len: {}".format(len(self._source_inds)))
+                print("source index len: {}".format(len(self._source_inds)))
                 print("source index: {}".format(self._source_inds[:5]))
-                # print("target index len: {}".format(len(self._target_inds)))
+                print("target index len: {}".format(len(self._target_inds)))
                 print("target index: {}".format(self._target_inds[:5]))
 
-                assert len(self._source_inds) == 24314, 'source index length error in layer.py'
-                assert len(self._target_inds) == 1128, 'target index length error in layer.py'
+                # assert len(self._source_inds) == 410, 'source index length error in layer.py'
+                # assert len(self._target_inds) == 948, 'target index length error in layer.py'
                 
 
                 # shuffle source & target index independently
@@ -90,7 +90,7 @@ class RoIDataLayer(object):
                 print("perm concate length: {}".format(len(perm_concate)))
                 print("perm concate: {}".format(perm_concate[:5]))
 
-                assert len(perm_concate) == 48628, "perm concate length error in layer.py"
+                # assert len(perm_concate) == 820, "perm concate length error in layer.py"
 
                 self._perm = perm_concate
             else:  # val mode    

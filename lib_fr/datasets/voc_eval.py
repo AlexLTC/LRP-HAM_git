@@ -138,6 +138,15 @@ def voc_eval(detpath,
   class_recs = {}
   npos = 0
   for imagename in imagenames:
+    # print('\n')
+    # print("imagename: {}".format(imagename))
+    # print("type imagename: {}".format(type(imagename)))
+    # print("recs[imagename]: {}".format(recs[imagename]))
+    # print("type imagename: {}".format(type(recs[imagename])))
+    # print("name: {}".format(recs[imagename]['name']))
+    # print("type imagename: {}".format(type(recs[imagename]['name'])))
+
+
     R = [obj for obj in recs[imagename] if obj['name'] == classname]
     bbox = np.array([x['bbox'] for x in R])
     if use_diff:

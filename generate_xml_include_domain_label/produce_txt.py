@@ -5,8 +5,8 @@ import os, glob, cv2
 # path_txt = '/home/dennischang/LRP-HAM/data/throat_uvula_dataset2007/VOC2007/20210116 Label/argument/txt/'
 
 """alex"""
-path = '/media/xuus/A45ED35B5ED324B8/alex/for_train_data/20220115/source/gt/'
-path_txt = '/media/xuus/A45ED35B5ED324B8/alex/for_train_data/20220115/source/transform_to_txt/'
+path = '/media/xuus/A45ED35B5ED324B8/alex/for_train_data/20220418/wrong_size/gt/'
+path_txt = '/media/xuus/A45ED35B5ED324B8/alex/for_train_data/20220418/wrong_size/txt/'
 
 if not os.path.exists(path_txt):
     os.mkdir(path_txt)
@@ -46,7 +46,7 @@ for path in data_path:
             # print(os.path.splitext(path.split("/",)[-1])[0])
 
         with open(path_txt + os.path.splitext(path.split("/", )[-1])[0] + ".txt", "a") as f:
-            f.write(str(x) + "," + str(y) + "," + str(x + w) + "," + str(y + v) + ",polyps" + "\n")
+            f.write(str(x) + "," + str(y) + "," + str(x + w) + "," + str(y + v) + ",uvula" + "\n")
             f.close()
 
 

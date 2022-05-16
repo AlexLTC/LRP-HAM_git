@@ -35,6 +35,7 @@ class Network(object):
         self._layers = {}
         self._gt_image = None
         self._variables_to_fix = {}
+        self._event_summaries = {}  # storing losses show on tensorboard
 
     def _add_gt_image(self):
         # add back mean
@@ -219,7 +220,7 @@ class Network(object):
 
     ############# LRP-HAI ADDITIONAL COMPONENTS -- START #########################
 
-    def train_LRP_HAI(self, sess, lr_rl, sc, stats):
+    def train_LRP_HAI(self, sess, lr_rl, sc, stats, cur_iter, writer):
         # Compute baseline
         if cfg.LRP_HAI_TRAIN.USE_BL:
             # cfg.LRP_HAI.MAX_ITER_TRAJ = 13
@@ -255,16 +256,22 @@ class Network(object):
                    self._advs_total: self._ep_batch['total_return'][idx],
                    self._cond_switch_fix: self._ep_batch['cond'][idx]}
 
-            ce_done, ce_fix, ce_done_rew_prod, ce_fix_rew_prod, loss_rl, new_grads \
+            ce_done, ce_fix, ce_done_rew_prod, ce_fix_rew_prod, loss_rl, new_grads, rl_summary_op \
                 = sess.run([self._predictions['ce_done'],
                             self._predictions['ce_fix'],
                             self._predictions['ce_done_rew_prod'],
                             self._predictions['ce_fix_rew_prod'],
                             self._predictions['loss_rl'],
-                            self._predictions['new_grads']],
+                            self._predictions['new_grads'],
+                            self._rl_summary_op],
                            feed_dict=feed_dict_grad_comp)
             # feed_dict 在此處為輸入 feed_dict_grad_comp 到佔位符
             # 也就是用 feed_dict_grad_comp裡的數值，算出 self._predictions['ce_done']等數值
+            
+            # 在第 50 iter 時將資訊寫至 tensorboard 紀錄
+            # record summary at init_rl_train()
+            if idx == len(self._ep_batch) - 1:
+                writer.add_summary(rl_summary_op, cur_iter)
 
             curr_batch_avg_loss += loss_rl
             curr_batch_ce_done_rew_prod += ce_done_rew_prod   # TR
@@ -278,6 +285,7 @@ class Network(object):
         curr_batch_ce_done_rew_prod /= cfg.LRP_HAI_TRAIN.BATCH_SIZE
         curr_batch_ce_fix_rew_prod /= cfg.LRP_HAI_TRAIN.BATCH_SIZE  # 全除50
 
+        
         sc.update(curr_batch_avg_loss, curr_batch_ce_done_rew_prod, curr_batch_ce_fix_rew_prod, stats)
         # state.shape=5,sc為輸入
         # 有update的效果
@@ -451,6 +459,13 @@ class Network(object):
         self._predictions['ce_fix_rew_prod'] = ce_fix_rew_prod
         self._predictions['loss_rl'] = loss_rl
         self._predictions['new_grads'] = new_grads
+
+        # record on tensorboard every 50 iters
+        rl_summaries = []
+        rl_summaries.append(tf.summary.scalar("loss_rl", loss_rl))
+        rl_summaries.append(tf.summary.scalar("ce_done_rew_prod", ce_done_rew_prod))
+        rl_summaries.append(tf.summary.scalar("ce_fix_rew_prod", ce_fix_rew_prod))
+        self._rl_summary_op = tf.summary.merge(rl_summaries)
 
         # Initialize gradient buffer
         self._grad_buffer = sess.run(self.drl_tvars)
@@ -944,6 +959,15 @@ class Network(object):
         if training:
             self._add_losses()
             layers_to_output.update(self._losses)
+            self._event_summaries.update(self._losses) 
+            # add losses before rl on tensorboard
+            summaries = []
+            with tf.device("/cpu:0"):
+                for key, var in self._event_summaries.items():
+                    summaries.append(tf.summary.scalar(key, var))
+
+            self._det_summary_op = tf.summary.merge(summaries)
+
         layers_to_output.update(self._predictions)
         self.fr_tvars = tf.trainable_variables()
 
@@ -978,10 +1002,11 @@ class Network(object):
         feed_dict = {self._net_conv_in: net_conv, self._rois_seq: rois_seq,
                      self._im_info: im_info, self._gt_boxes: gt_boxes,
                      self._image: np.zeros((1, 1, 1, 3)), self._cond_switch_roi: 0}
-        loss_cls, loss_box, loss, _ \
+        loss_cls, loss_box, loss, det_summary_op, _ \
             = sess.run([self._losses['cross_entropy'], self._losses['loss_box'],
-                        self._losses['total_loss'], train_op], feed_dict=feed_dict)
-        return loss_cls, loss_box, loss
+                        self._losses['total_loss'], self._det_summary_op, train_op], 
+                       feed_dict=feed_dict)
+        return loss_cls, loss_box, loss, det_summary_op
 
     def train_step_no_return(self, sess, blobs, train_op):
         feed_dict = {self._image: blobs['data'], self._im_info: blobs['im_info'],

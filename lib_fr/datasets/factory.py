@@ -17,7 +17,18 @@ from datasets.polyp import polyp
 from datasets.coco import coco
 from datasets.cell import cell
 from datasets.throat_uvula import throat_uvula
+from datasets.cityscapes import cityscapes
 import numpy as np
+
+# Set up cityscapes_<year>_<split>
+for year in ['2007', '2012', '2012_test']:
+    for split in ['train', 'val', 'trainval', 'test']:
+        name = 'cityscapes_{}_{}'.format(year, split)
+        __sets[name] = (lambda split=split, year=year: cityscapes(split, year))
+for year in ['2007', '2012', '2012_test']:
+    for split in ['train', 'val', 'trainval', 'test']:
+        name = 'cityscapes_{}_{}_diff'.format(year, split)
+        __sets[name] = (lambda split=split, year=year: cityscapes(split, year,use_diff=True))
 
 # Set up voc_<year>_<split> 
 for year in ['2007', '2012', '2012_test']:

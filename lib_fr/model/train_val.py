@@ -153,6 +153,7 @@ class SolverWrapper(object):
                             grad = tf.multiply(grad, scale)
                         final_gvs.append((grad, var))
                 
+                # exclude rpn & fc weight when using target data
                 da_gvs = []
                 with tf.variable_scope('Divide_DA_weights') as scope:
                     for grad, var in final_gvs:
@@ -319,7 +320,8 @@ class SolverWrapper(object):
         next_stepsize = stepsizes.pop()
         while iter < max_iters + 1:
             # Set linear lambda(reference from GRL MNIST Test)
-            l = 2. / (1. + np.exp(-10. * (iter/(max_iters+1)))) - 1
+            # l = 2. / (1. + np.exp(-10. * (iter/(max_iters+1)))) - 1
+            l = 0.1
 
             # Learning rate
             if iter == next_stepsize + 1:
@@ -384,8 +386,8 @@ class SolverWrapper(object):
                                  '>>> loss_cls: %.6f\n'
                                  '>>> loss_box: %.6f\n'
                                  '>>> lambda: %.6f\n'
-                                 # '>>> dc_loss: %.6f\n'
-                                 '>>> da_conv_loss: %.6f\n'
+                                 '>>> dc_loss: %.6f\n'
+                                 # '>>> da_conv_loss: %.6f\n'
                                  # '>>> da_CR_loss: %.6f\n'
                                  '>>> lr: %f' % \
                                  (iter, max_iters, total_loss, 
@@ -397,9 +399,9 @@ class SolverWrapper(object):
                 self.logger.info('speed: {:.3f}s / iter'.format(timer.average_time))
                 self.logger.info('\n')
 
-            print("iter: {}".format(iter))
-            print("domain: {}".format("target" if is_target else "source"))
-            print("train operaiton type: {}".format("train_op" if blobs['dc_label'] == 0 else "da_train_op"))
+            # print("iter: {}".format(iter))
+            # print("domain: {}".format("target" if is_target else "source"))
+            # print("train operaiton type: {}".format("train_op" if blobs['dc_label'] == 0 else "da_train_op"))
             # print("dc loss :{}".format(dc_loss))
             # print("total loss: {}".format(total_loss))
             # print("dc_ip3: {}".format(np.transpose(dc_ip3)))
@@ -408,16 +410,16 @@ class SolverWrapper(object):
             # print("rpn_loss_box has grad? {}".format(rpn_loss_box))
             # print("loss_cls has grad? {}".format(loss_cls))
             # print("loss_box has grad? {}".format(loss_box))
-            print("total_loss:{:.6f}".format(total_loss))
-            print("rpn_loss_cls:{:.6f}".format(rpn_loss_cls))
-            print("rpn_loss_box:{:.6f}".format(rpn_loss_box))
-            print("loss_cls:{:.6f}".format(loss_cls))
-            print("loss_box:{:.6f}".format(loss_box))
-            print("dc_loss:{:.6f}".format(dc_loss))
+            # print("total_loss:{:.6f}".format(total_loss))
+            # print("rpn_loss_cls:{:.6f}".format(rpn_loss_cls))
+            # print("rpn_loss_box:{:.6f}".format(rpn_loss_box))
+            # print("loss_cls:{:.6f}".format(loss_cls))
+            # print("loss_box:{:.6f}".format(loss_box))
             # print("da_conv_loss:{:.6f}".format(da_conv_loss))
-            # print("da_CR_loss:{:.6f}".format(da_CR_loss))
-            print("lambda: {}".format(l))
-            print('\n')
+            # # print("da_conv_loss:{:.6f}".format(da_conv_loss))
+            # # print("da_CR_loss:{:.6f}".format(da_CR_loss))
+            # print("lambda: {}".format(l))
+            # print('\n')
 
             # Snapshotting
             if iter % cfg.TRAIN.SNAPSHOT_ITERS == 0:

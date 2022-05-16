@@ -189,6 +189,7 @@ class P4(Network):
         # return list rather than dict, to avoid dict is unordered
         return pyramid_dict['P4']
 
+
     def _head_to_tail(self, pool5, is_training, reuse=None):
         with tf.variable_scope('build_fc_layers'):
             inputs = slim.flatten(inputs=pool5, scope='flatten_inputs')
@@ -227,13 +228,13 @@ class P4(Network):
             w_init_last = tf.random_normal_initializer(stddev=0.05)
 
             dc_ip1 = slim.fully_connected(feat, 
-                                          num_outputs=1024,
+                                          num_outputs=256,
                                           weights_initializer=initializer,
                                           trainable=is_training,
                                           scope='dc_ip1')
             dc_ip1 = slim.dropout(dc_ip1, 0.5, is_training=is_training, scope='dc_drop1')
             dc_ip2 = slim.fully_connected(dc_ip1,
-                                          num_outputs=1024,
+                                          num_outputs=256,
                                           weights_initializer=initializer,
                                           trainable=is_training,
                                           scope='dc_ip2')
@@ -252,14 +253,14 @@ class P4(Network):
         with tf.variable_scope('image-level_DA'): 
             # -0.1 is scale-factor for GRL
             # initializer_bbox is std=0.001
-            da_conv_grl = self.lr_mult(-0.1)(net_conv)
+            da_conv_grl = self.lr_mult(tf.negative(self.l))(net_conv)
             da_conv_ss_6 = slim.conv2d(da_conv_grl, num_outputs=512,
                                        kernel_size=[1, 1],
                                        stride=1, padding='VALID',
                                        weights_initializer=initializer_bbox,
                                        trainable=is_training,
                                        scope='da_conv_ss_6')
-            da_score_ss = slim.conv2d(da_conv_ss_6, num_outputs=2,
+            da_score_ss = slim.conv2d(da_conv_ss_6, num_outputs=1,
                                       kernel_size=[1, 1],
                                       stride=1, padding='VALID',
                                       activation_fn=None,

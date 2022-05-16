@@ -85,7 +85,7 @@ case ${DATASET} in
     ;;
 
   throat_uvula)
-    TRAIN_IMDB="throat_uvula_2007_trainval"
+    TRAIN_IMDB="throat_uvula_2007_train"
     TEST_IMDB="throat_uvula_2007_test"
     STEPSIZE="[50000]"
     LRP_HAI_STEPSIZE="90000"
@@ -97,7 +97,7 @@ case ${DATASET} in
     ;;
 
   polyp)
-    TRAIN_IMDB="polyp_2007_trainval"
+    TRAIN_IMDB="polyp_2007_train"
     TEST_IMDB="polyp_2007_test"
     STEPSIZE="[50000]"
     LRP_HAI_STEPSIZE="90000"

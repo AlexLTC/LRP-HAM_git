@@ -86,8 +86,8 @@ case ${DATASET} in
     P4=True
     ;;
   throat_uvula)
-    TRAIN_IMDB="throat_uvula_2007_trainval"
-    TEST_IMDB="throat_uvula_2007_test"
+    TRAIN_IMDB="throat_uvula_2007_train"
+    TEST_IMDB="throat_uvula_2007_val"
     STEPSIZE="[50000]"
     LRP_HAI_STEPSIZE="90000"
     NBR_CLASSES="2"
@@ -97,8 +97,8 @@ case ${DATASET} in
     P4=True
     ;;
   polyp)
-    TRAIN_IMDB="polyp_2007_trainval"
-    TEST_IMDB="polyp_2007_test"
+    TRAIN_IMDB="polyp_2007_train"
+    TEST_IMDB="polyp_2007_val"
     STEPSIZE="[50000]"
     LRP_HAI_STEPSIZE="90000"
     NBR_CLASSES="2"

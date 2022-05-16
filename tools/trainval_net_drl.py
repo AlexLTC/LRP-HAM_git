@@ -12,7 +12,7 @@ from __future__ import print_function
 
 import _init_paths_drl
 from model.train_val import get_training_roidb, train_net
-from model.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
+from model.config import cfg, cfg_from_file, cfg_from_list, get_output_dir, get_output_tb_dir
 from datasets.factory import get_imdb
 import datasets.imdb
 import argparse
@@ -27,6 +27,9 @@ import tensorflow as tf
 from nets.vgg16 import vgg16
 from nets.resnet_v1 import resnetv1
 from nets.P4 import P4
+
+import datetime
+
 # import os
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # import os
@@ -92,7 +95,7 @@ def parse_args():
                         default='res101', type=str)
     parser.add_argument('--det_start', dest='det_start',
                         help='-1: dont train detector; >=0: train detector onwards',
-                        default=40000, type=int)#40000
+                        default=40000, type=int)
     parser.add_argument("--alpha", type=str2bool, nargs='?',
                         const=True, default=True,
                         help="Activate alpha mode.")
@@ -191,11 +194,16 @@ if __name__ == '__main__':
     logger.info('Using config:\n{}'.format(pprint.pformat(cfg)))
     logger.info('{:d} roidb entries'.format(len(roidb)))
     logger.info('Output will be saved to `{:s}`'.format(output_dir))
+    
+    # make tensorboard output directory
+    tb_dir = get_output_tb_dir(imdb, "ARM")
+    tb_dir = os.path.join(tb_dir, datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+    logger.info('TensorFlow summaries will be saved to `{:s}`'.format(tb_dir))
 
     # also add the validation set, but with no flipping images
     orgflip = cfg.TRAIN.USE_FLIPPED  # true
     cfg.TRAIN.USE_FLIPPED = False
-    _, valroidb = combined_roidb(args.imdbval_name)# voc_2007_test
+    _, valroidb = combined_roidb(args.imdbval_name)  # voc_2007_test
     logger.info('{:d} validation roidb entries'.format(len(valroidb)))
     cfg.TRAIN.USE_FLIPPED = orgflip
 
@@ -219,7 +227,7 @@ if __name__ == '__main__':
             raise NotImplementedError
 
     # 實際開始訓練
-    train_net(net, imdb, roidb, valroidb, output_dir, pretrained_model=args.weight,
+    train_net(net, imdb, roidb, valroidb, output_dir, tb_dir,pretrained_model=args.weight,
               max_iters=args.max_iters)
 
 

@@ -282,6 +282,7 @@ class Network(object):
         # da_score_ss output: 
         # Tensor("image-level_DA/da_conv_ss/Relu:0", shape=(1, ?, ?, 2), dtype=float32)
         # da_score_ss = self._head_to_daConv(net_conv, is_training, initializer_bbox)
+        #
         self._predictions['dc_ip3'] = dc_ip3
         # self._predictions['da_score_ss'] = da_score_ss
 
@@ -362,17 +363,18 @@ class Network(object):
             dc_loss = tf.reduce_mean(
                     tf.nn.sigmoid_cross_entropy_with_logits(logits=dc_ip3, 
                                                             labels=dc_label_resize))
-            # self._variables_to_fix['dc_ip3'] = dc_ip3
-            # self._variables_to_fix['dc_label_resize'] = dc_label_resize
+            self._variables_to_fix['dc_ip3'] = dc_ip3
+            self._variables_to_fix['dc_label_resize'] = dc_label_resize
 
             # # image-level loss
             # da_score_ss = self._predictions['da_score_ss']
-            # da_label_ss_resize = self._resize_sslb(da_score_ss) 
+            # da_score_ss_flat = tf.reshape(da_score_ss, [tf.shape(da_score_ss)[0], -1])
+            # da_label_ss_resize = self._resize_sslb(da_score_ss_flat) 
             # da_conv_loss = tf.reduce_mean(
-            #         tf.nn.sparse_softmax_cross_entropy_with_logits(logits=da_score_ss,
-            #                                                        labels=da_label_ss_resize))
+            #         tf.nn.sigmoid_cross_entropy_with_logits(logits=da_score_ss_flat,
+            #                                                 labels=da_label_ss_resize))
 
-            # consisitency regularization loss
+            # # consisitency regularization loss
             # resize_daConv_CR = self._resize_da_conv_score_for_CR(da_score_ss, dc_ip3)
             # da_CR_loss = tf.reduce_mean(tf.abs(tf.substract(resize_daConv_CR, dc_ip3)))  # l1 distance
 
@@ -425,21 +427,23 @@ class Network(object):
         return dc_label_resize
         
 
-    def _resize_sslb(self, da_score_ss_resize):
+    def _resize_sslb(self, da_score_ss_flat):
         # from caffe's resize_sslb.py
-        feats = da_score_ss_resize  # shape is [1, ?, ?, 2]
+        feats = da_score_ss_flat  # shape is [1, ?, ?, 2]
         lbs = self._need_backprop  # shape is (1, 1), content is 1(target) or 0(source)
-        lbs_resize = tf.reshape(lbs, [1, 1, 1])  # only (b, h, w) without channel for sparse_softmax_ce
-        print("check shape start-----------------------------------------------")
-        print("feats shape: {}".format(tf.shape(feats)))
-        print("lbs_resize's shape:{}".format(tf.shape(lbs_resize)))
+        # lbs_resize = tf.reshape(lbs, [1, 1, 1])  # only (b, h, w) without channel for sparse_softmax_ce
+        # print("check shape start-----------------------------------------------")
+        # print("feats shape: {}".format(tf.shape(feats)))
+        # print("lbs_resize's shape:{}".format(tf.shape(lbs_resize)))
         
-        # (b, h, w) through tf.image.resize(image, (h',w')) transform to (h', w', b)
-        da_label_ss_resize = tf.image.resize(lbs_resize, 
-                                             (tf.shape(feats)[1], tf.shape(feats)[2]),
-                                             method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
-        # tranpose to (b, h', c')
-        da_label_ss_resize = tf.transpose(da_label_ss_resize, perm=[2, 0, 1])
+        # # (b, h, w) through tf.image.resize(image, (h',w')) transform to (h', w', b)
+        # da_label_ss_resize = tf.image.resize(lbs_resize, 
+        #                                      (tf.shape(feats)[1], tf.shape(feats)[2]),
+        #                                      method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+        # # tranpose to (b, h', c')
+        # da_label_ss_resize = tf.transpose(da_label_ss_resize, perm=[2, 0, 1])
+
+        da_label_ss_resize = tf.tile(lbs, [tf.shape(feats)[0], 1])
 
         return da_label_ss_resize
 
@@ -525,7 +529,7 @@ class Network(object):
         self._im_info = tf.placeholder(tf.float32, shape=[3])
         self._gt_boxes = tf.placeholder(tf.float32, shape=[None, 5])
         self._dc_label = tf.placeholder(tf.float32, shape=[1, 1])
-        self._need_backprop = tf.placeholder(tf.int32, shape=[1, 1])
+        self._need_backprop = tf.placeholder(tf.float32, shape=[1, 1])
         self._is_target = tf.reshape(tf.equal(self._dc_label, 1), ())
         self.l = tf.placeholder(tf.float32, shape=[])
         self._tag = tag

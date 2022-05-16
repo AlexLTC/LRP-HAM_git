@@ -6,8 +6,11 @@ import random
 #saveBasePath=r"/home/dennischang/LRP-HAM/data/throat_uvula_dataset2007/VOC2007/ImageSets/Main"
 
 """alex"""
-xmlfilepath=r'/media/xuus/A45ED35B5ED324B8/LRP-HAM_git/data/polyp_dataset2007/VOC2007/Annotations'
-saveBasePath=r"/media/xuus/A45ED35B5ED324B8/LRP-HAM_git/data/polyp_dataset2007/VOC2007/ImageSets/Main"
+xmlfilepath=r'/media/xuus/A45ED35B5ED324B8/DATE-FRCNN/data/polyp_dataset2007/VOC2007/Annotations'
+saveBasePath=r'/media/xuus/A45ED35B5ED324B8/DATE-FRCNN/data/polyp_dataset2007/VOC2007/ImageSets/Main/for_ori_DA'
+
+if not os.path.exists(saveBasePath):
+    os.makedirs(saveBasePath)
 
 trainval_percent=0.8
 train_percent=0.7
@@ -17,7 +20,7 @@ total_xml = os.listdir(xmlfilepath)
 
 # source or target 的檔名都是由數字排序,因此擷取數字排序與分類即可
 num=len(total_xml)
-assert num==15197, "file numbers error"
+# assert num==293, "file numbers error"
 list=range(num)
 
 # # source 只有在 trainval 部份，而 target 才會分佈在 trainval 與 test 中

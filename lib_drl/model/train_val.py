@@ -36,13 +36,14 @@ import logging
 class SolverWrapper(object):
     """ A wrapper class for the training process """
 
-    def __init__(self, sess, network, imdb, roidb, valroidb, output_dir,
+    def __init__(self, sess, network, imdb, roidb, valroidb, output_dir, tb_dir,
                  pretrained_model=None, logger=None):
         self.net = network
         self.imdb = imdb
         self.roidb = roidb
         self.valroidb = valroidb
         self.output_dir = output_dir
+        self.tb_dir = tb_dir
         self.pretrained_model = pretrained_model
         self.logger = logger
 
@@ -155,7 +156,10 @@ class SolverWrapper(object):
 
             # Initialize main LRP-HAI network
             self.net.build_LRP_HAI_network()
-            #     build_LRP_HAI_network/HAI/HAI_rollout
+            # build_LRP_HAI_network/HAI/HAI_rollout
+
+            # write summaries and rl summaries on tensorboard
+            self.writer = tf.summary.FileWriter(self.tb_dir, sess.graph)
 
         return lr, train_op
 
@@ -361,9 +365,10 @@ class SolverWrapper(object):
             timers['run-LRP-HAI'].tic()
             # Run LRP-HAI detector on an image blob
             # 控制reward部份，看幾眼跟iou去做rl
-            net_conv, rois_LRP_HAI, gt_boxes, im_info, timers, stats = run_LRP_HAI(sess, self.net, blobs, timers, mode='train',
-                                                                           beta=beta, im_idx=None, extra_args=lr_rl,
-                                                                           alpha=cfg.LRP_HAI.ALPHA)
+            net_conv, rois_LRP_HAI, gt_boxes, im_info, timers, stats \
+                    = run_LRP_HAI(sess, self.net, blobs, timers, mode='train',
+                                  beta=beta, im_idx=None, extra_args=lr_rl,
+                                  alpha=cfg.LRP_HAI.ALPHA)
             timers['run-LRP-HAI'].toc()
 
             # BATCH_SIZE = 50
@@ -372,7 +377,10 @@ class SolverWrapper(object):
                 self.logger.info('iter: %d / %d' % (iter + 1, max_iters))
                 self.logger.info('lr-rl: %f' % lr_rl)
                 timers['train-LRP-HAI'].tic()
-                self.net.train_LRP_HAI(sess, lr_rl, sc, stats)
+
+                # add rl summary on tensorboard
+                self.net.train_LRP_HAI(sess, lr_rl, sc, stats, iter + 1, self.writer)
+
                 # sc會不斷紀錄新的值, 包刮loss與reward
                 timers['train-LRP-HAI'].toc()
                 sc.print_stats(iter=iter + 1, logger=self.logger)
@@ -408,9 +416,11 @@ class SolverWrapper(object):
                 if rois_LRP_HAI is not None:
                     timer.tic()
                     # Train detector part
-                    loss_cls, loss_box, tot_loss \
+                    loss_cls, loss_box, tot_loss, det_summary\
                         = self.net.train_step_det(sess, train_op, net_conv, rois_LRP_HAI,
                                                 gt_boxes, im_info)
+
+                    self.writer.add_summary(det_summary, iter + 1)
                     timer.toc()
 
                 # Display training information
@@ -440,6 +450,9 @@ class SolverWrapper(object):
         m, s = divmod(total_time, 60)
         h, m = divmod(m, 60)
         self.logger.info("total time: %02d:%02d:%02d" % (h, m, s))
+
+        # close tensorboard FileWriter
+        self.writer.close()
 
 
 def get_training_roidb(imdb):
@@ -479,7 +492,7 @@ def filter_roidb(roidb):
     return filtered_roidb
 
 
-def train_net(network, imdb, roidb, valroidb, output_dir,
+def train_net(network, imdb, roidb, valroidb, output_dir, tb_dir,
               pretrained_model=None, max_iters=40000):
     """Train LRP-HAI for a Faster R-CNN network."""
     roidb = filter_roidb(roidb)# """Remove roidb entries that have no usable RoIs."""
@@ -500,7 +513,7 @@ def train_net(network, imdb, roidb, valroidb, output_dir,
     # 記錄器 fileconfig #<Logger LRP-HAI.train_net (DEBUG)>
 
     with tf.Session(config=tfconfig) as sess:
-        sw = SolverWrapper(sess, network, imdb, roidb, valroidb, output_dir,
+        sw = SolverWrapper(sess, network, imdb, roidb, valroidb, output_dir, tb_dir,
                            pretrained_model, logger)
         logger.info('Solving...')
         sw.train_model(sess, max_iters)

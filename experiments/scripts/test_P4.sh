@@ -16,6 +16,16 @@ EXTRA_ARGS_SLUG=${EXTRA_ARGS// /_}
 
 
 case ${DATASET} in
+  cityscapes)
+    TRAIN_IMDB="cityscapes_2007_trainval"
+    TEST_IMDB="cityscapes_2007_test"
+    ITERS=70000
+    ANCHOR_SIZES="[128,256,512]"
+    RATIOS="[0.5,1,2]"
+    ANCHOR_STRIDES="[16,]"
+    P4=True
+    ;;
+
   pascal_voc)
     TRAIN_IMDB="voc_2007_trainval"
     TEST_IMDB="voc_2007_test"
