@@ -79,7 +79,7 @@ case ${DATASET} in
     TEST_IMDB="throat_2007_test"
     STEPSIZE="[50000]"
     LRP_HAI_STEPSIZE="90000"
-    NBR_CLASSES="4"
+    NBR_CLASSES="5"
     ANCHOR_SIZES="[128,256,512]"
     ANCHOR_STRIDES="[16,]"
     ANCHOR_RATIOS="[0.5,1,2]"

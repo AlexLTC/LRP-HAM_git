@@ -6,14 +6,14 @@ import random
 #saveBasePath=r"/home/dennischang/LRP-HAM/data/throat_uvula_dataset2007/VOC2007/ImageSets/Main"
 
 """alex"""
-xmlfilepath=r'/media/xuus/A45ED35B5ED324B8/DATE-FRCNN/data/polyp_dataset2007/VOC2007/Annotations'
-saveBasePath=r'/media/xuus/A45ED35B5ED324B8/DATE-FRCNN/data/polyp_dataset2007/VOC2007/ImageSets/Main/for_ori_DA'
+xmlfilepath=r'/media/xuus/A45ED35B5ED324B8/temp/polyp_uvula/Annotations'
+saveBasePath=r'/media/xuus/A45ED35B5ED324B8/temp/polyp_uvula/Main/ImageSets/8&2'
 
 if not os.path.exists(saveBasePath):
     os.makedirs(saveBasePath)
 
 trainval_percent=0.8
-train_percent=0.7
+train_percent=0.8
 total_xml = os.listdir(xmlfilepath)
 # total_xml.sort(key= lambda x:int(x[1:-5]))
 #print(total_xml)

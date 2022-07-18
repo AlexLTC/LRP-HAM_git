@@ -228,13 +228,13 @@ class P4(Network):
             w_init_last = tf.random_normal_initializer(stddev=0.05)
 
             dc_ip1 = slim.fully_connected(feat, 
-                                          num_outputs=256,
+                                          num_outputs=1024,
                                           weights_initializer=initializer,
                                           trainable=is_training,
                                           scope='dc_ip1')
             dc_ip1 = slim.dropout(dc_ip1, 0.5, is_training=is_training, scope='dc_drop1')
             dc_ip2 = slim.fully_connected(dc_ip1,
-                                          num_outputs=256,
+                                          num_outputs=1024,
                                           weights_initializer=initializer,
                                           trainable=is_training,
                                           scope='dc_ip2')

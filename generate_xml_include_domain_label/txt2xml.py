@@ -5,10 +5,11 @@ from PIL import Image
 # path = '/home/dennischang/LRP-HAM/data/throat_uvula_dataset2007/VOC2007/20210116 Label/argument/'
 
 """alex"""
-path = '/media/xuus/A45ED35B5ED324B8/alex/for_train_data/20220418/wrong_size/'
+path = '/media/xuus/A45ED35B5ED324B8/KITTI_dataset/data_object_label_2/training/'
 
 # VEDAI 图像存储位置
-src_img_dir = path + 'gt'
+# src_img_dir = path + 'gt'
+src_img_dir = '/media/xuus/A45ED35B5ED324B8/KITTI_dataset/data_object_image_2/training/image_2_jpg'
 # VEDAI 图像的 ground truth 的 txt 文件存放位置
 src_txt_dir = path + "txt"
 src_xml_dir = path + "xml"  # output path
@@ -40,7 +41,7 @@ for img in img_names:
     xml_file = open((src_xml_dir + '/' + img + '.xml'), 'w')
     xml_file.write('<annotation>\n')
     xml_file.write('    <folder>VOC2007</folder>\n')
-    xml_file.write('    <filename>' + str(img) + '.jpg' + '</filename>\n')
+    xml_file.write('    <filename>' + 'source_' + str(img) + '.jpg' + '</filename>\n')
     xml_file.write('    <size>\n')
     xml_file.write('        <width>' + str(width) + '</width>\n')
     xml_file.write('        <height>' + str(height) + '</height>\n')

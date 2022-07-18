@@ -559,13 +559,13 @@ def save_visualization(im_blob, im_shape, im_idx, obs_canvas, cls_probs,
         if np.count_nonzero(obs_canvas[:, :, i]) == 0:
             continue
 
-        """
+        
         nonzeros = np.nonzero(obs_canvas[:, :, i])
         start_x = nonzeros[1][0]
         start_y = nonzeros[0][0]
         end_x = nonzeros[1][-1]
         end_y = nonzeros[0][-1]
-
+        
         
         #若是不要將glimpse的部份輸出，請將此處關掉
         # Show fixation number
@@ -589,7 +589,7 @@ def save_visualization(im_blob, im_shape, im_idx, obs_canvas, cls_probs,
             save_ctr += 1
             im_name = 'im' + str(im_idx + 1) + '_' + str(save_ctr) + '.jpg'
             plt.savefig(im_name)
-        """
+        
 
 
         # Draw all detection boxes

@@ -15,7 +15,7 @@ EXTRA_ARGS=${array[@]:3:$len}
 EXTRA_ARGS_SLUG=${EXTRA_ARGS// /_}
 
 case ${DATASET} in
-  citypscapes)
+  cityscapes)
     TRAIN_IMDB="cityscapes_2007_trainval"
     TEST_IMDB="cityscapes_2007_test"
     STEPSIZE="[50000]"
@@ -142,4 +142,4 @@ if [ ! -f ${NET_FINAL}.index ]; then
   fi
 fi
 
-./experiments/scripts/test_P4.sh $@
+# ./experiments/scripts/test_P4.sh $@

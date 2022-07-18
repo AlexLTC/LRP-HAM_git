@@ -51,12 +51,7 @@ def parse_args():
                         default='experiments/cfgs/LRP-HAI-P4.yml', type=str)
     parser.add_argument('--model', dest='model',
                         help='model to test',
-                        #default='/media/data/LRP-HAI/experiments/drl-model-2/P4/res101/drl-model-2-1/output/res101_LRP_HAI/cell_train/res101_LRP_HAI_iter_110000.ckpt',
-                        #default='/home/dennischang/LRP-HAI/TEST/L-RPN-HAM/pascal_voc_喉鏡（副本）/P4/res101/L-RPN-HAM-1/output/res101_LRP_HAI/voc_2007_trainval/res101_LRP_HAI_iter_110000.ckpt',
-                        #default='/home/user/xuus_blue/LRP-HAM/HAM-weights_Main0/polyp/P4/res101/output/P4/res101/polyp_2007_trainval/res101_LRP_HAI_iter_110000.ckpt',
-                        #default='/home/user/xuus_blue/LRP-HAM/HAM-weights_Main0/pascal_voc/P4/res101/output/P4/res101/voc_2007_trainval/res101_LRP_HAI_iter_110000.ckpt',
-                        #default='/home/user/xuus_blue/LRP-HAM/HAM-weights_Main0/throat/P4/res101/output/P4/res101/throat_2007_trainval/res101_LRP_HAI_iter_110000.ckpt',
-			default='/home/user/xuus_blue/LRP-HAM/HAM-weights/throat_uvula/P4/res101/output/P4/res101/throat_uvula_2007_trainval/res101_LRP_HAI_iter_110000.ckpt',
+			default='/media/xuus/A45ED35B5ED324B8/LRP-HAM_git/HAM-weights/throat_uvula/P4/res101/output/P4/res101/throat_uvula_2007_train/res101_LRP_HAI_iter_110000.ckpt',
                         type=str)# 改這裡
     parser.add_argument('--imdb', dest='imdb_name',
                         help='dataset to test',
@@ -221,7 +216,7 @@ if __name__ == '__main__':
     do_visualize = cfg.LRP_HAI_TEST.DO_VISUALIZE
 
     # 改這裡
-    load_dir = "demo_image/throat_uvula_from_net"
+    load_dir = "demo_image/uvula_lab"
     imgs = os.listdir(load_dir)
     _t = {'im_detect': Timer(), 'misc': Timer(), 'total_time': Timer()}
     _t_LRP_HAI = {'init': Timer(), 'fulltraj': Timer(),
